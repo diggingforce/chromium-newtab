@@ -1,0 +1,68 @@
+{
+  "title": "New Tab",
+  "gif": "gif.gif",
+  "theme": {
+    "bg": "#191919",
+    "text": "#fafafa",
+    "font": "Departure Mono"
+  },
+  "search": {
+    "default": "https://google.com/search?q=",
+    "bangs": {
+      "!yt": { "name": "youtube", "url": "https://youtube.com/results?search_query=" },
+      "!gh": { "name": "github", "url": "https://github.com/search?q=" },
+      "!r": { "name": "reddit", "url": "https://reddit.com/search/?q=" },
+      "!a": { "name": "anilist", "url": "https://anilist.co/search/anime?search=" },
+      "!ddg": { "name": "ddg", "url": "https://duckduckgo.com/?q=" },
+      "!p": { "name": "perplexity", "url": "https://www.perplexity.ai/search?q=" },
+      "!w": { "name": "wikipedia", "url": "https://en.wikipedia.org/wiki/Special:Search?search=" }
+    }
+  },
+  "sections": [
+    {
+      "title": "Social",
+      "links": [
+        { "name": "discord", "url": "https://discord.com" },
+        { "name": "reddit", "url": "https://reddit.com" },
+        { "name": "twitter", "url": "https://twitter.com" },
+        { "name": "instagram", "url": "https://instagram.com" }
+      ]
+    },
+    {
+      "title": "Search",
+      "links": [
+        { "name": "google", "url": "https://google.com" },
+        { "name": "github", "url": "https://github.com" },
+        { "name": "ddg", "url": "https://duckduckgo.com" },
+        { "name": "perplexity", "url": "https://perplexity.ai" }
+      ]
+    },
+    {
+      "title": "Media",
+      "links": [
+        { "name": "youtube", "url": "https://youtube.com" },
+        { "name": "spotify", "url": "https://open.spotify.com" },
+        { "name": "anilist", "url": "https://anilist.co" },
+        { "name": "pinterest", "url": "https://www.pinterest.com" }
+      ]
+    },
+    {
+      "title": "Extra",
+      "links": [
+        { "name": "chatgpt", "url": "https://chatgpt.com" },
+        { "name": "wikipedia", "url": "https://en.wikipedia.org" },
+        { "name": "monkeytype", "url": "https://monkeytype.com" },
+        { "name": "gramophone", "url": "https://gramophone.bignut.zip/" }
+      ]
+    }
+  ],
+  "settings": {
+    "show-search-area": true,
+    "show-gif": true,
+    "show-social": true,
+    "show-media": true,
+    "show-search": true,
+    "show-extra": true,
+    "autohide-settings": false
+  }
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Tab</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <button type="button" id="open-settings">settings</button>
+    <div id="settings" class="hidden">
+        <div class="top">
+            <h2>Settings</h2>
+            <button type="button" id="close-settings">close</button>
+        </div>
+
+        <div class="settings-section" id="section-visibility">
+            <div class="settings-section-header">
+                <div class="settings-subtitle"><span class="section-arrow">▼</span> Visibility</div>
+            </div>
+            <div class="settings-section-content">
+                <div class="settings" id="visibility-toggles">
+                    <div>
+                        <label for="show-search-area">search area</label>
+                        <input type="checkbox" id="show-search-area" checked>
+                    </div>
+                    <div>
+                        <label for="show-gif">show gif</label>
+                        <input type="checkbox" id="show-gif" checked>
+                    </div>
+                    <div id="category-toggles"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section collapsed" id="section-appearance">
+            <div class="settings-section-header">
+                <div class="settings-subtitle"><span class="section-arrow">▶</span> Appearance</div>
+            </div>
+            <div class="settings-section-content">
+                <div class="appearance-grid">
+                    <div class="appearance-row">
+                        <label for="gif-source">gif / image</label>
+                        <div class="settings-input">
+                            <input type="text" id="gif-source" placeholder="gif.gif or image URL">
+                            <button type="button" id="gif-done">done</button>
+                        </div>
+                    </div>
+                    <div class="appearance-row">
+                        <label for="bg-color">bg color</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="bg-color-picker" value="#191919">
+                            <input type="text" id="bg-color" value="#191919" placeholder="#191919">
+                        </div>
+                    </div>
+                    <div class="appearance-row">
+                        <label for="text-color">text color</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="text-color-picker" value="#fafafa">
+                            <input type="text" id="text-color" value="#fafafa" placeholder="#fafafa">
+                        </div>
+                    </div>
+                    <div class="appearance-row">
+                        <label for="font-select">font style</label>
+                        <select id="font-select">
+                            <option value="Departure Mono">Departure Mono</option>
+                            <option value="Maple Mono">Maple Mono</option>
+                            <option value="monospace">monospace</option>
+                            <option value="sans-serif">sans-serif</option>
+                            <option value="serif">serif</option>
+                        </select>
+                    </div>
+                    <div class="appearance-row">
+                        <label for="autohide-settings">autohide btn</label>
+                        <input type="checkbox" id="autohide-settings">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section collapsed" id="section-shortcuts">
+            <div class="settings-section-header">
+                <div class="settings-subtitle"><span class="section-arrow">▶</span> Shortcuts</div>
+                <button type="button" id="add-category-btn" class="btn-small">+ add category</button>
+            </div>
+            <div class="settings-section-content">
+                <div id="categories-editor"></div>
+            </div>
+        </div>
+    </div>
+
+    <main class="startpage-container">
+        <div class="gif-box">
+            <img id="preview-gif" src="gif.gif" alt="gif">
+        </div>
+
+        <section class="content-column">
+            <div class="links-grid" id="links-grid"></div>
+
+            <div class="search-area">
+                <span class="search-prompt">&gt; find :</span>
+                <input type="text" id="find-input" placeholder="type here" autofocus autocomplete="off" spellcheck="false">
+                <span class="search-badge" id="engine-badge">[/]</span>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

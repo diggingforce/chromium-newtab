@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/chrome-manifest.json",
+  "name": "chromium-newtab",
+  "version": "1.0",
+  "manifest_version": 3,
+  "description": "a custom minimal new tab extension for Chromium-based browsers",
+  "author": "diggingforce",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "icons": {
+    "128": "icon.png"
+  },
+  "permissions": ["storage"]
+}
