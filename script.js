@@ -497,8 +497,12 @@ input.addEventListener('keydown', function (e) {
             return;
         }
 
-        const defaultSearch = config.search?.default || 'https://google.com/search?q=';
-        window.location.href = defaultSearch + encodeURIComponent(val);
+        if (browserApi?.search?.query) {
+            browserApi.search.query({ text: val, disposition: 'CURRENT_TAB' });
+        } else {
+            const defaultSearch = config.search?.default || 'https://google.com/search?q=';
+            window.location.href = defaultSearch + encodeURIComponent(val);
+        }
     } else if (e.key === 'Escape') {
         this.value = '';
         badge.textContent = '[/]';
