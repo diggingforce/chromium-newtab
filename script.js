@@ -486,7 +486,7 @@ function sanitizeImportedConfig(raw) {
                 links: Array.isArray(section.links)
                     ? section.links
                         .filter(isPlainObject)
-                        .filter(link => typeof link.name === 'string' && typeof link.url === 'string')
+                        .filter(link => typeof link.name === 'string' && typeof link.url === 'string' && /^https?:\/\//i.test(link.url))
                         .map(link => ({ name: link.name, url: link.url }))
                     : []
             }));
