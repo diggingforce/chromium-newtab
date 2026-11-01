@@ -471,7 +471,7 @@ function sanitizeImportedConfig(raw) {
         const settings = {};
         Object.entries(source.settings).forEach(([key, value]) => {
             if (!isSafeKey(key)) return;
-            if (typeof value === 'boolean' || typeof value === 'string' || typeof value === 'number') {
+            if (typeof value === 'boolean') {
                 settings[key] = value;
             }
         });
