@@ -495,7 +495,14 @@ function sanitizeImportedConfig(raw) {
     if (isPlainObject(source.theme)) {
         const theme = {};
         ['bg', 'text', 'font'].forEach(key => {
-            if (typeof source.theme[key] === 'string') theme[key] = source.theme[key];
+            if (typeof source.theme[key] !== 'string') return;
+
+            if ((key === 'bg' || key === 'text') && typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && !CSS.supports('color', source.theme[key])) {
+                skipped += 1;
+                return;
+            }
+
+            theme[key] = source.theme[key];
         });
         if (Object.keys(theme).length) result.theme = theme;
     }
@@ -503,10 +510,11 @@ function sanitizeImportedConfig(raw) {
     if (isPlainObject(source.settings)) {
         const settings = {};
         Object.entries(source.settings).forEach(([key, value]) => {
-            if (!isSafeKey(key)) return;
-            if (typeof value === 'boolean') {
-                settings[key] = value;
+            if (!isSafeKey(key) || typeof value !== 'boolean') {
+                skipped += 1;
+                return;
             }
+            settings[key] = value;
         });
         if (Object.keys(settings).length) result.settings = settings;
     }
@@ -661,6 +669,7 @@ async function handleImportFile(file) {
         const sanitized = sanitizeImportedConfig(JSON.parse(text));
 
         if (!sanitized) {
+            console.warn('Import rejected: no recognized settings in file');
             setBackupStatus('import failed: invalid settings file', true);
             return;
         }
@@ -678,8 +687,8 @@ async function handleImportFile(file) {
             : '';
         setBackupStatus(`settings imported from ${file.name}${skippedSuffix}`);
     } catch (e) {
-        console.warn('Could not import settings:', e);
-        setBackupStatus('import failed: invalid settings file', true);
+        console.error('Could not import settings:', e);
+        setBackupStatus(`import failed: ${e?.message || 'invalid settings file'}`, true);
     } finally {
         if (importSettingsFile) importSettingsFile.value = '';
     }
