@@ -15,6 +15,13 @@ a custom minimal new tab extension for Chromium-based browsers.
 4. Click **Load unpacked** and select the folder with this repository.
 5. Open a new tab and enjoy.
 
+## Sharing settings
+
+1. Open **settings** in the top right of the new tab.
+2. Expand **Import / Export**.
+3. Click **export** to download a JSON file with your theme, shortcuts and preferences.
+4. Share the file with someone. They can click **import**, pick the file and confirm to apply it. Importing replaces their current settings.
+
 ## Credits
 
 - Settings menu by [zyqunix](https://github.com/zyqunix)

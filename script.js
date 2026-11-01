@@ -24,10 +24,16 @@ const openSettingsBtn = document.getElementById('open-settings');
 const closeSettingsBtn = document.getElementById('close-settings');
 const settingsModal = document.getElementById('settings');
 
+const exportSettingsBtn = document.getElementById('export-settings');
+const importSettingsBtn = document.getElementById('import-settings');
+const importSettingsFile = document.getElementById('import-settings-file');
+const backupStatus = document.getElementById('backup-status');
+
 const browserApi = globalThis.browser ?? globalThis.chrome;
 let config = {};
 let draggedCategoryIndex = null;
 let draggedShortcut = null;
+let backupStatusTimer = null;
 
 async function init() {
     try {
@@ -82,6 +88,16 @@ async function init() {
         config.sections = [];
     }
 
+    syncSettingsUI();
+    render(config);
+    renderCategoryToggles();
+    renderCategoriesEditor();
+}
+
+function syncSettingsUI() {
+    if (!config.settings) config.settings = {};
+    if (!config.theme) config.theme = {};
+
     if (showSearchAreaCheck) showSearchAreaCheck.checked = Boolean(config.settings['show-search-area']);
     if (showGifCheck) showGifCheck.checked = Boolean(config.settings['show-gif']);
     if (gifSource) gifSource.value = config.gif || 'gif.gif';
@@ -89,9 +105,6 @@ async function init() {
 
     applyAutohide(config.settings['autohide-settings']);
     applyTheme(config.theme);
-    render(config);
-    renderCategoryToggles();
-    renderCategoriesEditor();
 }
 
 function applyTheme(theme) {
@@ -427,6 +440,185 @@ async function updateSettings(setting, value) {
     render(config);
 }
 
+function isPlainObject(value) {
+    return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isSafeKey(key) {
+    return key !== '__proto__' && key !== 'constructor' && key !== 'prototype';
+}
+
+function sanitizeImportedConfig(raw) {
+    if (!isPlainObject(raw)) return null;
+
+    const source = isPlainObject(raw.config) ? raw.config : raw;
+    if (!isPlainObject(source)) return null;
+
+    const result = {};
+
+    if (typeof source.title === 'string') result.title = source.title;
+    if (typeof source.gif === 'string') result.gif = source.gif;
+
+    if (isPlainObject(source.theme)) {
+        const theme = {};
+        ['bg', 'text', 'font'].forEach(key => {
+            if (typeof source.theme[key] === 'string') theme[key] = source.theme[key];
+        });
+        result.theme = theme;
+    }
+
+    if (isPlainObject(source.settings)) {
+        const settings = {};
+        Object.entries(source.settings).forEach(([key, value]) => {
+            if (!isSafeKey(key)) return;
+            if (typeof value === 'boolean' || typeof value === 'string' || typeof value === 'number') {
+                settings[key] = value;
+            }
+        });
+        result.settings = settings;
+    }
+
+    if (Array.isArray(source.sections)) {
+        result.sections = source.sections
+            .filter(isPlainObject)
+            .map(section => ({
+                title: typeof section.title === 'string' && section.title.trim() ? section.title : 'Untitled',
+                links: Array.isArray(section.links)
+                    ? section.links
+                        .filter(isPlainObject)
+                        .filter(link => typeof link.name === 'string' && typeof link.url === 'string')
+                        .map(link => ({ name: link.name, url: link.url }))
+                    : []
+            }));
+    }
+
+    if (isPlainObject(source.search)) {
+        const search = {};
+        if (isPlainObject(source.search.bangs)) {
+            const bangs = {};
+            Object.entries(source.search.bangs).forEach(([key, bang]) => {
+                if (!isSafeKey(key)) return;
+                if (isPlainObject(bang) && typeof bang.name === 'string' && typeof bang.url === 'string') {
+                    bangs[key] = { name: bang.name, url: bang.url };
+                }
+            });
+            search.bangs = bangs;
+        }
+        if (typeof source.search.default === 'string') search.default = source.search.default;
+        result.search = search;
+    }
+
+    return Object.keys(result).length ? result : null;
+}
+
+function pruneStaleCategorySettings() {
+    const keep = new Set(['show-search-area', 'show-gif']);
+    config.sections.forEach(section => {
+        keep.add(`show-${String(section.title).toLowerCase()}`);
+    });
+
+    Object.keys(config.settings).forEach(key => {
+        if (key.startsWith('show-') && !keep.has(key)) {
+            delete config.settings[key];
+        }
+    });
+}
+
+function applyImportedConfig(imported) {
+    config = {
+        ...config,
+        ...imported,
+        settings: {
+            ...(config.settings || {}),
+            ...(imported.settings || {})
+        },
+        theme: {
+            ...(config.theme || {}),
+            ...(imported.theme || {})
+        }
+    };
+
+    if (!Array.isArray(config.sections)) config.sections = [];
+    if (!config.settings) config.settings = {};
+    if (!config.theme) config.theme = {};
+
+    pruneStaleCategorySettings();
+    saveConfig();
+    syncSettingsUI();
+    render(config);
+    renderCategoryToggles();
+    renderCategoriesEditor();
+}
+
+function setBackupStatus(message, isError = false) {
+    if (!backupStatus) return;
+
+    backupStatus.textContent = message;
+    backupStatus.classList.toggle('error', Boolean(isError));
+
+    if (backupStatusTimer) clearTimeout(backupStatusTimer);
+    backupStatusTimer = setTimeout(() => {
+        backupStatus.textContent = '';
+        backupStatus.classList.remove('error');
+    }, 6000);
+}
+
+function exportSettings() {
+    const payload = {
+        app: 'chromium-newtab',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        config
+    };
+
+    try {
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const date = new Date().toISOString().slice(0, 10);
+
+        link.href = url;
+        link.download = `chromium-newtab-settings-${date}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        setBackupStatus('settings exported');
+    } catch (e) {
+        console.warn('Could not export settings:', e);
+        setBackupStatus('export failed', true);
+    }
+}
+
+async function handleImportFile(file) {
+    if (!file) return;
+
+    try {
+        const text = await file.text();
+        const imported = sanitizeImportedConfig(JSON.parse(text));
+
+        if (!imported) {
+            setBackupStatus('import failed: invalid settings file', true);
+            return;
+        }
+
+        const confirmed = window.confirm('Import these settings? This will replace your current theme, shortcuts and preferences.');
+        if (!confirmed) {
+            setBackupStatus('import cancelled');
+            return;
+        }
+
+        applyImportedConfig(imported);
+        setBackupStatus(`settings imported from ${file.name}`);
+    } catch (e) {
+        console.warn('Could not import settings:', e);
+        setBackupStatus('import failed: invalid settings file', true);
+    } finally {
+        if (importSettingsFile) importSettingsFile.value = '';
+    }
+}
+
 function esc(str) {
     return String(str ?? '')
         .replace(/&/g, '&amp;')
@@ -600,6 +792,16 @@ if (openSettingsBtn && settingsModal) {
 }
 if (closeSettingsBtn && settingsModal) {
     closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+}
+
+if (exportSettingsBtn) {
+    exportSettingsBtn.addEventListener('click', exportSettings);
+}
+if (importSettingsBtn && importSettingsFile) {
+    importSettingsBtn.addEventListener('click', () => importSettingsFile.click());
+    importSettingsFile.addEventListener('change', () => {
+        handleImportFile(importSettingsFile.files?.[0]);
+    });
 }
 
 init();
