@@ -493,7 +493,7 @@ body {
     gap: 12px;
 }
 
-.backup-row label {
+.backup-row .backup-label {
     font-size: 12px;
     color: var(--muted-foreground);
     width: 100px;

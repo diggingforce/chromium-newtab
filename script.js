@@ -30,7 +30,18 @@ const importSettingsFile = document.getElementById('import-settings-file');
 const backupStatus = document.getElementById('backup-status');
 
 const browserApi = globalThis.browser ?? globalThis.chrome;
+const FALLBACK_SETTINGS = {
+    'show-search-area': true,
+    'show-gif': true,
+    'autohide-settings': false
+};
+const FALLBACK_THEME = {
+    bg: '#191919',
+    text: '#fafafa',
+    font: 'Departure Mono'
+};
 let config = {};
+let defaultConfig = {};
 let draggedCategoryIndex = null;
 let draggedShortcut = null;
 let backupStatusTimer = null;
@@ -40,6 +51,7 @@ async function init() {
         const res = await fetch('config.json');
         if (res.ok) {
             config = await res.json();
+            defaultConfig = JSON.parse(JSON.stringify(config));
         }
     } catch (e) {
         console.warn('Could not fetch config.json:', e);
@@ -69,24 +81,27 @@ async function init() {
     }
 
     if (!config.settings) {
-        config.settings = {
-            'show-search-area': true,
-            'show-gif': true,
-            'autohide-settings': false
-        };
+        config.settings = { ...FALLBACK_SETTINGS };
     }
 
     if (!config.theme) {
-        config.theme = {
-            bg: '#191919',
-            text: '#fafafa',
-            font: 'Departure Mono'
-        };
+        config.theme = { ...FALLBACK_THEME };
     }
 
     if (!Array.isArray(config.sections)) {
         config.sections = [];
     }
+
+    if (!Object.keys(defaultConfig).length) {
+        defaultConfig = {
+            settings: { ...FALLBACK_SETTINGS },
+            theme: { ...FALLBACK_THEME },
+            sections: []
+        };
+    }
+
+    delete config.settings.gif;
+    if (defaultConfig.settings) delete defaultConfig.settings.gif;
 
     syncSettingsUI();
     render(config);
@@ -433,9 +448,12 @@ async function saveConfig() {
 }
 
 async function updateSettings(setting, value) {
-    if (!config.settings) config.settings = {};
-    config.settings[setting] = value;
-    if (setting === 'gif') config.gif = value;
+    if (setting === 'gif') {
+        config.gif = value;
+    } else {
+        if (!config.settings) config.settings = {};
+        config.settings[setting] = value;
+    }
     await saveConfig();
     render(config);
 }
@@ -448,6 +466,20 @@ function isSafeKey(key) {
     return key !== '__proto__' && key !== 'constructor' && key !== 'prototype';
 }
 
+const UNSAFE_URL_SCHEMES = ['javascript:', 'data:', 'vbscript:', 'blob:', 'filesystem:'];
+
+function isSafeUrl(value) {
+    if (typeof value !== 'string') return false;
+
+    const normalized = value
+        .replace(/[\s\u0000-\u001f\u007f-\u009f\ufeff\u200b-\u200d\u2060]/g, '')
+        .toLowerCase();
+
+    if (!normalized) return false;
+
+    return !UNSAFE_URL_SCHEMES.some(scheme => normalized.startsWith(scheme));
+}
+
 function sanitizeImportedConfig(raw) {
     if (!isPlainObject(raw)) return null;
 
@@ -455,6 +487,7 @@ function sanitizeImportedConfig(raw) {
     if (!isPlainObject(source)) return null;
 
     const result = {};
+    let skipped = 0;
 
     if (typeof source.title === 'string') result.title = source.title;
     if (typeof source.gif === 'string') result.gif = source.gif;
@@ -464,7 +497,7 @@ function sanitizeImportedConfig(raw) {
         ['bg', 'text', 'font'].forEach(key => {
             if (typeof source.theme[key] === 'string') theme[key] = source.theme[key];
         });
-        result.theme = theme;
+        if (Object.keys(theme).length) result.theme = theme;
     }
 
     if (isPlainObject(source.settings)) {
@@ -475,40 +508,61 @@ function sanitizeImportedConfig(raw) {
                 settings[key] = value;
             }
         });
-        result.settings = settings;
+        if (Object.keys(settings).length) result.settings = settings;
     }
 
     if (Array.isArray(source.sections)) {
-        result.sections = source.sections
-            .filter(isPlainObject)
-            .map(section => ({
+        const sections = source.sections.filter(isPlainObject);
+        skipped += source.sections.length - sections.length;
+
+        result.sections = sections.map(section => {
+            const links = Array.isArray(section.links) ? section.links : [];
+            const validLinks = links
+                .filter(isPlainObject)
+                .filter(link => typeof link.name === 'string' && typeof link.url === 'string' && isSafeUrl(link.url))
+                .map(link => ({ name: link.name, url: link.url }));
+
+            skipped += links.length - validLinks.length;
+
+            return {
                 title: typeof section.title === 'string' && section.title.trim() ? section.title : 'Untitled',
-                links: Array.isArray(section.links)
-                    ? section.links
-                        .filter(isPlainObject)
-                        .filter(link => typeof link.name === 'string' && typeof link.url === 'string' && /^https?:\/\//i.test(link.url))
-                        .map(link => ({ name: link.name, url: link.url }))
-                    : []
-            }));
+                links: validLinks
+            };
+        });
     }
 
     if (isPlainObject(source.search)) {
         const search = {};
+
         if (isPlainObject(source.search.bangs)) {
+            const entries = Object.entries(source.search.bangs);
             const bangs = {};
-            Object.entries(source.search.bangs).forEach(([key, bang]) => {
+
+            entries.forEach(([key, bang]) => {
                 if (!isSafeKey(key)) return;
-                if (isPlainObject(bang) && typeof bang.name === 'string' && typeof bang.url === 'string') {
+                if (isPlainObject(bang) && typeof bang.name === 'string' && typeof bang.url === 'string' && isSafeUrl(bang.url)) {
                     bangs[key] = { name: bang.name, url: bang.url };
                 }
             });
-            search.bangs = bangs;
+
+            skipped += entries.length - Object.keys(bangs).length;
+            if (Object.keys(bangs).length) search.bangs = bangs;
         }
-        if (typeof source.search.default === 'string') search.default = source.search.default;
-        result.search = search;
+
+        if (typeof source.search.default === 'string') {
+            if (isSafeUrl(source.search.default)) {
+                search.default = source.search.default;
+            } else {
+                skipped += 1;
+            }
+        }
+
+        if (Object.keys(search).length) result.search = search;
     }
 
-    return Object.keys(result).length ? result : null;
+    if (!Object.keys(result).length) return null;
+
+    return { config: result, skipped };
 }
 
 function pruneStaleCategorySettings() {
@@ -525,22 +579,30 @@ function pruneStaleCategorySettings() {
 }
 
 function applyImportedConfig(imported) {
+    const base = Object.keys(defaultConfig).length
+        ? JSON.parse(JSON.stringify(defaultConfig))
+        : {};
+
     config = {
-        ...config,
+        ...base,
         ...imported,
         settings: {
-            ...(config.settings || {}),
+            ...(base.settings || {}),
             ...(imported.settings || {})
         },
         theme: {
-            ...(config.theme || {}),
+            ...(base.theme || {}),
             ...(imported.theme || {})
         }
     };
 
     if (!Array.isArray(config.sections)) config.sections = [];
-    if (!config.settings) config.settings = {};
-    if (!config.theme) config.theme = {};
+    if (!config.settings || !Object.keys(config.settings).length) {
+        config.settings = { ...FALLBACK_SETTINGS };
+    }
+    if (!config.theme || !Object.keys(config.theme).length) {
+        config.theme = { ...FALLBACK_THEME };
+    }
 
     pruneStaleCategorySettings();
     saveConfig();
@@ -596,9 +658,9 @@ async function handleImportFile(file) {
 
     try {
         const text = await file.text();
-        const imported = sanitizeImportedConfig(JSON.parse(text));
+        const sanitized = sanitizeImportedConfig(JSON.parse(text));
 
-        if (!imported) {
+        if (!sanitized) {
             setBackupStatus('import failed: invalid settings file', true);
             return;
         }
@@ -609,8 +671,12 @@ async function handleImportFile(file) {
             return;
         }
 
-        applyImportedConfig(imported);
-        setBackupStatus(`settings imported from ${file.name}`);
+        applyImportedConfig(sanitized.config);
+
+        const skippedSuffix = sanitized.skipped
+            ? ` (${sanitized.skipped} invalid item${sanitized.skipped === 1 ? '' : 's'} skipped)`
+            : '';
+        setBackupStatus(`settings imported from ${file.name}${skippedSuffix}`);
     } catch (e) {
         console.warn('Could not import settings:', e);
         setBackupStatus('import failed: invalid settings file', true);

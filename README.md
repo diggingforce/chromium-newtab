@@ -20,7 +20,7 @@ a custom minimal new tab extension for Chromium-based browsers.
 1. Open **settings** in the top right of the new tab.
 2. Expand **Import / Export**.
 3. Click **export** to download a JSON file with your theme, shortcuts and preferences.
-4. Share the file with someone. They can click **import**, pick the file and confirm to apply it. Importing replaces their current settings.
+4. Share the file with someone. They can click **import**, pick the file and confirm to apply it. Importing replaces their current settings; unsafe links and bangs are skipped.
 
 ## Credits
 
