@@ -1,13 +1,18 @@
 # chromium-newtab
 
-a custom minimal new tab extension for Chromium-based browsers.
+a custom minimal new tab extension for Chromium-based browsers and Firefox.
 
 - Fully customizable
 - Bangs support
 
 ![Preview](demo.png)
 
-## How to use
+## Install
+
+- **Chrome Web Store**: [chromium-newtab](https://chromewebstore.google.com/detail/hbpcfggcnjbekkikcejejkdgkgbnofle)
+- **Firefox Add-ons**: [gecko-newtab](https://addons.mozilla.org/en-US/firefox/addon/gecko-newtab/)
+
+### Manual installation
 
 1. Clone or download this repository.
 2. Open your browser and go to `chrome://extensions` (works on Brave, Edge, Helium, etc.).
