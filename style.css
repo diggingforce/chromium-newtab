@@ -79,6 +79,11 @@ body {
     height: auto;
 }
 
+#preview-gif:not([src]),
+#preview-gif[src=""] {
+    visibility: hidden;
+}
+
 /* Content */
 .content-column {
     flex: 1;
@@ -349,6 +354,7 @@ body {
         padding: 4px 8px;
         font-family: inherit;
         font-size: 12px;
+        cursor: text;
     }
 
     input:focus {

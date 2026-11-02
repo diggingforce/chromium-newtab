@@ -46,6 +46,27 @@ let draggedCategoryIndex = null;
 let draggedShortcut = null;
 let backupStatusTimer = null;
 
+function applyCachedState() {
+    try {
+        const cachedTheme = localStorage.getItem('newtab_theme');
+        if (cachedTheme) {
+            applyTheme(JSON.parse(cachedTheme));
+        }
+    } catch (e) {}
+
+    const cachedShowGif = localStorage.getItem('newtab_show_gif');
+    if (cachedShowGif === 'false') {
+        if (gifBox) gifBox.style.display = 'none';
+        if (gif) gif.style.display = 'none';
+    } else {
+        const cachedGif = localStorage.getItem('newtab_gif');
+        if (gif) {
+            gif.src = cachedGif || 'gif.gif';
+        }
+    }
+}
+applyCachedState();
+
 async function init() {
     try {
         const res = await fetch('config.json');
@@ -124,6 +145,9 @@ function syncSettingsUI() {
 
 function applyTheme(theme) {
     if (!theme) return;
+    try {
+        localStorage.setItem('newtab_theme', JSON.stringify(theme));
+    } catch (e) {}
     const root = document.documentElement;
     if (theme.bg) {
         root.style.setProperty('--bg', theme.bg);
@@ -167,11 +191,21 @@ function updateTheme(key, value) {
 
 function render(data) {
     if (data.title) document.title = data.title;
-    if (data.gif && gif) gif.src = data.gif;
+    const targetGif = data.gif || 'gif.gif';
+    if (gif && gif.getAttribute('src') !== targetGif) {
+        gif.src = targetGif;
+    }
+    try {
+        localStorage.setItem('newtab_gif', targetGif);
+    } catch (e) {}
 
     const settings = data.settings || {};
     const showSearchArea = settings['show-search-area'] !== false;
     const showGif = settings['show-gif'] !== false;
+
+    try {
+        localStorage.setItem('newtab_show_gif', String(showGif));
+    } catch (e) {}
 
     applyAutohide(settings['autohide-settings']);
 
@@ -232,7 +266,7 @@ function renderCategoriesEditor() {
     if (!categoriesEditorContainer || !Array.isArray(config.sections)) return;
 
     categoriesEditorContainer.innerHTML = config.sections.map((section, sIdx) => `
-        <div class="category-card" data-section="${sIdx}" draggable="true">
+        <div class="category-card" data-section="${sIdx}">
             <div class="category-card-header">
                 <span class="drag-handle" title="Drag to rearrange category">⋮⋮</span>
                 <input type="text" class="category-title-input" value="${esc(section.title)}" placeholder="Category title">
@@ -241,7 +275,7 @@ function renderCategoriesEditor() {
             </div>
             <div class="category-shortcuts-list">
                 ${(section.links || []).map((link, lIdx) => `
-                    <div class="shortcut-row" data-link="${lIdx}" draggable="true">
+                    <div class="shortcut-row" data-link="${lIdx}">
                         <span class="drag-handle shortcut-drag-handle" title="Drag to rearrange shortcut">•</span>
                         <input type="text" class="shortcut-name" value="${esc(link.name)}" placeholder="Name">
                         <input type="text" class="shortcut-url" value="${esc(link.url)}" placeholder="https://...">
@@ -254,10 +288,22 @@ function renderCategoriesEditor() {
 
     categoriesEditorContainer.querySelectorAll('.category-card').forEach(card => {
         const sIdx = Number(card.dataset.section);
+        const catHandle = card.querySelector('.category-card-header .drag-handle');
+
+        if (catHandle) {
+            catHandle.addEventListener('mouseenter', () => {
+                if (!draggedShortcut) card.draggable = true;
+            });
+            catHandle.addEventListener('mouseleave', () => {
+                if (draggedCategoryIndex === null) card.draggable = false;
+            });
+            catHandle.addEventListener('mousedown', () => {
+                if (!draggedShortcut) card.draggable = true;
+            });
+        }
 
         card.addEventListener('dragstart', (e) => {
-            if (e.target.closest('.shortcut-row')) return;
-            if (e.target.tagName === 'INPUT' || (e.target.tagName === 'BUTTON' && !e.target.classList.contains('drag-handle'))) {
+            if (e.target !== card || !card.draggable || draggedShortcut) {
                 e.preventDefault();
                 return;
             }
@@ -268,6 +314,7 @@ function renderCategoriesEditor() {
         });
 
         card.addEventListener('dragend', () => {
+            card.draggable = false;
             card.classList.remove('dragging');
             categoriesEditorContainer.querySelectorAll('.category-card').forEach(c => {
                 c.classList.remove('drag-over');
@@ -360,12 +407,25 @@ function renderCategoriesEditor() {
 
         card.querySelectorAll('.shortcut-row').forEach(row => {
             const lIdx = Number(row.dataset.link);
+            const shortcutHandle = row.querySelector('.shortcut-drag-handle');
             const nameInput = row.querySelector('.shortcut-name');
             const urlInput = row.querySelector('.shortcut-url');
             const delLinkBtn = row.querySelector('.del-link-btn');
 
+            if (shortcutHandle) {
+                shortcutHandle.addEventListener('mouseenter', () => {
+                    row.draggable = true;
+                });
+                shortcutHandle.addEventListener('mouseleave', () => {
+                    if (!draggedShortcut) row.draggable = false;
+                });
+                shortcutHandle.addEventListener('mousedown', () => {
+                    row.draggable = true;
+                });
+            }
+
             row.addEventListener('dragstart', (e) => {
-                if (e.target.tagName === 'INPUT' || (e.target.tagName === 'BUTTON' && !e.target.classList.contains('drag-handle'))) {
+                if (e.target !== row || !row.draggable) {
                     e.preventDefault();
                     return;
                 }
@@ -378,6 +438,7 @@ function renderCategoriesEditor() {
 
             row.addEventListener('dragend', (e) => {
                 e.stopPropagation();
+                row.draggable = false;
                 row.classList.remove('dragging');
                 categoriesEditorContainer.querySelectorAll('.shortcut-row').forEach(r => r.classList.remove('drag-over'));
                 draggedShortcut = null;
@@ -437,6 +498,14 @@ function renderCategoriesEditor() {
     });
 }
 
+document.addEventListener('mouseup', () => {
+    if (draggedCategoryIndex === null && !draggedShortcut && categoriesEditorContainer) {
+        categoriesEditorContainer.querySelectorAll('.category-card[draggable="true"], .shortcut-row[draggable="true"]').forEach(el => {
+            el.draggable = false;
+        });
+    }
+});
+
 async function saveConfig() {
     if (browserApi?.storage?.local) {
         try {
@@ -450,9 +519,17 @@ async function saveConfig() {
 async function updateSettings(setting, value) {
     if (setting === 'gif') {
         config.gif = value;
+        try {
+            localStorage.setItem('newtab_gif', value || 'gif.gif');
+        } catch (e) {}
     } else {
         if (!config.settings) config.settings = {};
         config.settings[setting] = value;
+        if (setting === 'show-gif') {
+            try {
+                localStorage.setItem('newtab_show_gif', String(value));
+            } catch (e) {}
+        }
     }
     await saveConfig();
     render(config);
