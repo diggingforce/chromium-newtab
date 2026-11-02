@@ -189,6 +189,26 @@ function updateTheme(key, value) {
     saveConfig();
 }
 
+function sectionKey(title) {
+    const slug = String(title ?? '')
+        .normalize('NFC')
+        .toLowerCase()
+        .trim()
+        .replace(/[^\p{L}\p{N}]+/gu, '-')
+        .replace(/^-+|-+$/g, '');
+    return `show-${slug || 'untitled'}`;
+}
+
+function legacySectionKey(title) {
+    return `show-${String(title ?? '').toLowerCase()}`;
+}
+
+function isSectionVisible(settings, title) {
+    const key = sectionKey(title);
+    if (Object.prototype.hasOwnProperty.call(settings, key)) return settings[key] !== false;
+    return settings[legacySectionKey(title)] !== false;
+}
+
 function render(data) {
     if (data.title) document.title = data.title;
     const targetGif = data.gif || 'gif.gif';
@@ -215,8 +235,8 @@ function render(data) {
     if (gif) gif.style.display = showGif ? 'block' : 'none';
 
     if (grid && Array.isArray(data.sections)) {
-        grid.innerHTML = data.sections.map(section => `
-            <div class="category-block" data-title="${esc(section.title.toLowerCase())}">
+        grid.innerHTML = data.sections.map((section, idx) => `
+            <div class="category-block" data-idx="${idx}">
                 <h2 class="category-title">${esc(section.title)}</h2>
                 <ul>
                     ${(section.links || []).map(link => `
@@ -231,9 +251,9 @@ function render(data) {
         `).join('');
 
         grid.querySelectorAll('.category-block').forEach(block => {
-            const title = block.dataset.title;
-            if (title) {
-                block.style.display = settings[`show-${title}`] !== false ? '' : 'none';
+            const section = data.sections[Number(block.dataset.idx)];
+            if (section) {
+                block.style.display = isSectionVisible(settings, section.title) ? '' : 'none';
             }
         });
     }
@@ -243,8 +263,8 @@ function renderCategoryToggles() {
     if (!categoryTogglesContainer || !Array.isArray(config.sections)) return;
 
     categoryTogglesContainer.innerHTML = config.sections.map((section, idx) => {
-        const key = `show-${section.title.toLowerCase()}`;
-        const isChecked = config.settings[key] !== false;
+        const key = sectionKey(section.title);
+        const isChecked = isSectionVisible(config.settings, section.title);
         const id = `toggle-cat-${idx}`;
         return `
             <div>
@@ -374,13 +394,15 @@ function renderCategoriesEditor() {
 
         const titleInput = card.querySelector('.category-title-input');
         titleInput.addEventListener('input', () => {
-            const oldTitleKey = `show-${config.sections[sIdx].title.toLowerCase()}`;
+            const oldTitle = config.sections[sIdx].title;
             const newTitle = titleInput.value.trim() || 'Untitled';
             config.sections[sIdx].title = newTitle;
-            const newTitleKey = `show-${newTitle.toLowerCase()}`;
-            if (config.settings[oldTitleKey] !== undefined && oldTitleKey !== newTitleKey) {
-                config.settings[newTitleKey] = config.settings[oldTitleKey];
-                delete config.settings[oldTitleKey];
+            const oldKeys = [sectionKey(oldTitle), legacySectionKey(oldTitle)];
+            const newKey = sectionKey(newTitle);
+            const prev = oldKeys.map(k => config.settings[k]).find(v => v !== undefined);
+            if (prev !== undefined && !oldKeys.includes(newKey)) {
+                config.settings[newKey] = prev;
+                oldKeys.forEach(k => { delete config.settings[k]; });
             }
             saveConfig();
             render(config);
@@ -653,7 +675,8 @@ function sanitizeImportedConfig(raw) {
 function pruneStaleCategorySettings() {
     const keep = new Set(['show-search-area', 'show-gif']);
     config.sections.forEach(section => {
-        keep.add(`show-${String(section.title).toLowerCase()}`);
+        keep.add(sectionKey(section.title));
+        keep.add(legacySectionKey(section.title));
     });
 
     Object.keys(config.settings).forEach(key => {
