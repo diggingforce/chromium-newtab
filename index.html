@@ -89,6 +89,26 @@
                 <div id="categories-editor"></div>
             </div>
         </div>
+
+        <div class="settings-section collapsed" id="section-backup">
+            <div class="settings-section-header">
+                <div class="settings-subtitle"><span class="section-arrow">▶</span> Import / Export</div>
+            </div>
+            <div class="settings-section-content">
+                <div class="backup-grid">
+                    <div class="backup-row">
+                        <span class="backup-label" id="backup-label">settings file</span>
+                        <div class="settings-input" role="group" aria-labelledby="backup-label">
+                            <button type="button" class="btn-small" id="export-settings">export</button>
+                            <button type="button" class="btn-small" id="import-settings">import</button>
+                        </div>
+                    </div>
+                    <p class="backup-hint">export downloads a JSON file with your theme, shortcuts and preferences. importing replaces your current settings.</p>
+                    <p class="backup-status" id="backup-status" role="status" aria-live="polite"></p>
+                </div>
+                <input type="file" id="import-settings-file" accept=".json,application/json" hidden>
+            </div>
+        </div>
     </div>
 
     <main class="startpage-container">
