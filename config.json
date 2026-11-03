@@ -1,6 +1,6 @@
 {
   "title": "New Tab",
-  "gif": "gif.gif",
+  "gif": "assets/gif.gif",
   "theme": {
     "bg": "#191919",
     "text": "#fafafa",

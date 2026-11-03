@@ -103,8 +103,9 @@ function applyCachedState() {
             hasUploadedGif = localStorage.getItem('newtab_gif_uploaded') === 'true';
         } catch (e) {}
         if (gif && !hasUploadedGif) {
-            const cachedGif = localStorage.getItem('newtab_gif');
-            gif.src = cachedGif || 'gif.gif';
+            let cachedGif = localStorage.getItem('newtab_gif');
+            if (cachedGif === 'gif.gif') cachedGif = 'assets/gif.gif';
+            gif.src = cachedGif || 'assets/gif.gif';
         } else if (gif) {
             gif.src = TRANSPARENT_PIXEL;
         }
@@ -339,7 +340,8 @@ async function applyGifSource() {
     const value = gifSource.value.trim();
 
     if (uploadedGif || uploadedGifUrl) {
-        if (value === (config.gif || 'gif.gif')) {
+        const activeDefault = config.gif || 'assets/gif.gif';
+        if (value === activeDefault || (value === 'gif.gif' && activeDefault === 'assets/gif.gif')) {
             setGifUploadStatus('uploaded image is active. use remove to delete it.');
             return;
         }
@@ -348,7 +350,8 @@ async function applyGifSource() {
         if (!removed) return;
     }
 
-    await updateSettings('gif', value);
+    const normalizedValue = value === 'gif.gif' ? 'assets/gif.gif' : value;
+    await updateSettings('gif', normalizedValue);
 }
 
 async function init() {
@@ -409,6 +412,9 @@ async function init() {
 
     delete config.settings.gif;
     if (defaultConfig.settings) delete defaultConfig.settings.gif;
+    if (config.gif === 'gif.gif') {
+        config.gif = 'assets/gif.gif';
+    }
 
     await restoreUploadedGif();
     syncSettingsUI();
@@ -437,7 +443,11 @@ function syncSettingsUI() {
 
     if (showSearchAreaCheck) showSearchAreaCheck.checked = Boolean(config.settings['show-search-area']);
     if (showGifCheck) showGifCheck.checked = Boolean(config.settings['show-gif']);
-    if (gifSource) gifSource.value = config.gif || 'gif.gif';
+    if (gifSource) {
+        let currentGif = config.gif || 'assets/gif.gif';
+        if (currentGif === 'gif.gif') currentGif = 'assets/gif.gif';
+        gifSource.value = currentGif;
+    }
     if (autohideSettingsCheck) autohideSettingsCheck.checked = Boolean(config.settings['autohide-settings']);
 
     const isAutoTheme = Boolean(config.theme.auto);
@@ -550,7 +560,8 @@ function render(data) {
             localStorage.setItem('newtab_gif_uploaded', 'true');
         } catch (e) {}
     } else {
-        const targetGif = data.gif || 'gif.gif';
+        let targetGif = data.gif || 'assets/gif.gif';
+        if (targetGif === 'gif.gif') targetGif = 'assets/gif.gif';
         if (gif && gif.getAttribute('src') !== targetGif) {
             gif.src = targetGif;
         }
@@ -881,9 +892,10 @@ async function saveConfig() {
 
 async function updateSettings(setting, value) {
     if (setting === 'gif') {
-        config.gif = value;
+        const normalized = value === 'gif.gif' ? 'assets/gif.gif' : value;
+        config.gif = normalized;
         try {
-            localStorage.setItem('newtab_gif', value || 'gif.gif');
+            localStorage.setItem('newtab_gif', normalized || 'assets/gif.gif');
         } catch (e) {}
     } else {
         if (!config.settings) config.settings = {};
@@ -930,7 +942,9 @@ function sanitizeImportedConfig(raw) {
     let skipped = 0;
 
     if (typeof source.title === 'string') result.title = source.title;
-    if (typeof source.gif === 'string') result.gif = source.gif;
+    if (typeof source.gif === 'string') {
+        result.gif = source.gif === 'gif.gif' ? 'assets/gif.gif' : source.gif;
+    }
 
     if (isPlainObject(source.theme)) {
         const theme = {};

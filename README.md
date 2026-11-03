@@ -5,7 +5,7 @@ a custom minimal new tab extension for Chromium-based browsers and Firefox.
 - Fully customizable
 - Bangs support
 
-![Preview](demo.png)
+![Preview](assets/demo.png)
 
 ## Install
 
