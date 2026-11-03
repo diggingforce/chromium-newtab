@@ -20,14 +20,6 @@ a custom minimal new tab extension for Chromium-based browsers and Firefox.
 4. Click **Load unpacked** and select the folder with this repository.
 5. Open a new tab and enjoy.
 
-## Changing the background image
-
-1. Open **settings** in the top right of the new tab.
-2. Expand **Appearance**.
-3. Click **choose file** under **upload** to pick a GIF, PNG, JPG, WebP or AVIF from your device (up to 10 MB). You can also paste an image URL in **gif / image**.
-
-Uploaded images are stored locally in your browser and never leave your device. Use **remove** to go back to the default image or URL.
-
 ## Sharing settings
 
 1. Open **settings** in the top right of the new tab.
