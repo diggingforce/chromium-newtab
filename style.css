@@ -289,6 +289,10 @@ body {
         gap: 12px;
     }
 
+    .appearance-row[hidden] {
+        display: none;
+    }
+
     .appearance-row label {
         font-size: 12px;
         color: var(--muted-foreground);
@@ -561,7 +565,7 @@ body {
 
 .category-card {
     border: 1px solid var(--border);
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--card-bg, rgba(0, 0, 0, 0.25));
     padding: 10px;
     margin-bottom: 10px;
     transition: opacity 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;

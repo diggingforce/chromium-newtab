@@ -59,17 +59,35 @@
                     <p class="backup-hint gif-upload-hint">gif, png, jpg, webp or avif · up to 10 MB. the image stays on your device.</p>
                     <p class="backup-status" id="gif-upload-status" role="status" aria-live="polite"></p>
                     <div class="appearance-row">
-                        <label for="bg-color">bg color</label>
+                        <label for="auto-theme">auto theme</label>
+                        <input type="checkbox" id="auto-theme">
+                    </div>
+                    <div class="appearance-row" id="bg-color-row">
+                        <label for="bg-color" id="bg-color-label">bg color</label>
                         <div class="color-picker-wrapper">
                             <input type="color" id="bg-color-picker" value="#191919">
                             <input type="text" id="bg-color" value="#191919" placeholder="#191919">
                         </div>
                     </div>
-                    <div class="appearance-row">
-                        <label for="text-color">text color</label>
+                    <div class="appearance-row" id="light-bg-color-row" hidden>
+                        <label for="light-bg-color">light bg color</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="light-bg-color-picker" value="#fafafa">
+                            <input type="text" id="light-bg-color" value="#fafafa" placeholder="#fafafa">
+                        </div>
+                    </div>
+                    <div class="appearance-row" id="text-color-row">
+                        <label for="text-color" id="text-color-label">text color</label>
                         <div class="color-picker-wrapper">
                             <input type="color" id="text-color-picker" value="#fafafa">
                             <input type="text" id="text-color" value="#fafafa" placeholder="#fafafa">
+                        </div>
+                    </div>
+                    <div class="appearance-row" id="light-text-color-row" hidden>
+                        <label for="light-text-color">light text color</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="light-text-color-picker" value="#191919">
+                            <input type="text" id="light-text-color" value="#191919" placeholder="#191919">
                         </div>
                     </div>
                     <div class="appearance-row">

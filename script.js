@@ -14,10 +14,22 @@ const gifUploadFile = document.getElementById('gif-upload-file');
 const gifUploadName = document.getElementById('gif-upload-name');
 const gifUploadStatus = document.getElementById('gif-upload-status');
 
+const autoThemeCheck = document.getElementById('auto-theme');
+const bgColorLabel = document.getElementById('bg-color-label');
+const textColorLabel = document.getElementById('text-color-label');
+const lightBgRow = document.getElementById('light-bg-color-row');
+const lightTextRow = document.getElementById('light-text-color-row');
+
 const bgColorPicker = document.getElementById('bg-color-picker');
 const bgColorInput = document.getElementById('bg-color');
+const lightBgColorPicker = document.getElementById('light-bg-color-picker');
+const lightBgColorInput = document.getElementById('light-bg-color');
+
 const textColorPicker = document.getElementById('text-color-picker');
 const textColorInput = document.getElementById('text-color');
+const lightTextColorPicker = document.getElementById('light-text-color-picker');
+const lightTextColorInput = document.getElementById('light-text-color');
+
 const fontSelect = document.getElementById('font-select');
 const autohideSettingsCheck = document.getElementById('autohide-settings');
 
@@ -41,8 +53,11 @@ const FALLBACK_SETTINGS = {
     'autohide-settings': false
 };
 const FALLBACK_THEME = {
+    auto: false,
     bg: '#191919',
     text: '#fafafa',
+    lightBg: '#fafafa',
+    lightText: '#191919',
     font: 'Departure Mono'
 };
 let config = {};
@@ -376,6 +391,8 @@ async function init() {
 
     if (!config.theme) {
         config.theme = { ...FALLBACK_THEME };
+    } else {
+        config.theme = { ...FALLBACK_THEME, ...config.theme };
     }
 
     if (!Array.isArray(config.sections)) {
@@ -400,6 +417,20 @@ async function init() {
     renderCategoriesEditor();
 }
 
+function isLightColor(color) {
+    if (typeof color !== 'string') return false;
+    let hex = color.trim().replace(/^#/, '');
+    if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+    }
+    if (!/^[0-9a-f]{6}$/i.test(hex)) return false;
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 128;
+}
+
 function syncSettingsUI() {
     if (!config.settings) config.settings = {};
     if (!config.theme) config.theme = {};
@@ -408,6 +439,32 @@ function syncSettingsUI() {
     if (showGifCheck) showGifCheck.checked = Boolean(config.settings['show-gif']);
     if (gifSource) gifSource.value = config.gif || 'gif.gif';
     if (autohideSettingsCheck) autohideSettingsCheck.checked = Boolean(config.settings['autohide-settings']);
+
+    const isAutoTheme = Boolean(config.theme.auto);
+    if (autoThemeCheck) autoThemeCheck.checked = isAutoTheme;
+
+    if (bgColorLabel) bgColorLabel.textContent = isAutoTheme ? 'dark bg color' : 'bg color';
+    if (textColorLabel) textColorLabel.textContent = isAutoTheme ? 'dark text color' : 'text color';
+
+    if (lightBgRow) lightBgRow.hidden = !isAutoTheme;
+    if (lightTextRow) lightTextRow.hidden = !isAutoTheme;
+
+    const darkBg = config.theme.bg || '#191919';
+    const darkText = config.theme.text || '#fafafa';
+    const lightBg = config.theme.lightBg || '#fafafa';
+    const lightText = config.theme.lightText || '#191919';
+
+    if (bgColorInput) bgColorInput.value = darkBg;
+    if (bgColorPicker && /^#[0-9a-f]{6}$/i.test(darkBg)) bgColorPicker.value = darkBg;
+
+    if (textColorInput) textColorInput.value = darkText;
+    if (textColorPicker && /^#[0-9a-f]{6}$/i.test(darkText)) textColorPicker.value = darkText;
+
+    if (lightBgColorInput) lightBgColorInput.value = lightBg;
+    if (lightBgColorPicker && /^#[0-9a-f]{6}$/i.test(lightBg)) lightBgColorPicker.value = lightBg;
+
+    if (lightTextColorInput) lightTextColorInput.value = lightText;
+    if (lightTextColorPicker && /^#[0-9a-f]{6}$/i.test(lightText)) lightTextColorPicker.value = lightText;
 
     updateGifUploadUI();
     applyAutohide(config.settings['autohide-settings']);
@@ -419,21 +476,23 @@ function applyTheme(theme) {
     try {
         localStorage.setItem('newtab_theme', JSON.stringify(theme));
     } catch (e) {}
+
+    const isSystemDark = !theme.auto || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const activeBg = (theme.auto && !isSystemDark ? theme.lightBg : theme.bg) || (isSystemDark ? '#191919' : '#fafafa');
+    const activeText = (theme.auto && !isSystemDark ? theme.lightText : theme.text) || (isSystemDark ? '#fafafa' : '#191919');
+
     const root = document.documentElement;
-    if (theme.bg) {
-        root.style.setProperty('--bg', theme.bg);
-        if (bgColorInput) bgColorInput.value = theme.bg;
-        if (bgColorPicker && /^#[0-9a-f]{6}$/i.test(theme.bg)) {
-            bgColorPicker.value = theme.bg;
-        }
-    }
-    if (theme.text) {
-        root.style.setProperty('--foreground', theme.text);
-        if (textColorInput) textColorInput.value = theme.text;
-        if (textColorPicker && /^#[0-9a-f]{6}$/i.test(theme.text)) {
-            textColorPicker.value = theme.text;
-        }
-    }
+    root.style.setProperty('--bg', activeBg);
+    root.style.setProperty('--foreground', activeText);
+
+    const isLight = isLightColor(activeBg);
+    root.style.setProperty('--bg-over', isLight ? '#f4f4f5' : '#232323');
+    root.style.setProperty('--border', isLight ? '#e4e4e7' : '#27272a');
+    root.style.setProperty('--border-hover', isLight ? '#d4d4d8' : '#3f3f46');
+    root.style.setProperty('--muted', isLight ? '#71717a' : '#71717a');
+    root.style.setProperty('--muted-foreground', isLight ? '#52525b' : '#a1a1aa');
+    root.style.setProperty('--card-bg', isLight ? 'rgba(0, 0, 0, 0.04)' : 'rgba(0, 0, 0, 0.25)');
+
     if (theme.font) {
         const fontMap = {
             'Departure Mono': "'Departure Mono', monospace",
@@ -875,10 +934,13 @@ function sanitizeImportedConfig(raw) {
 
     if (isPlainObject(source.theme)) {
         const theme = {};
-        ['bg', 'text', 'font'].forEach(key => {
+        if (typeof source.theme.auto === 'boolean') {
+            theme.auto = source.theme.auto;
+        }
+        ['bg', 'text', 'lightBg', 'lightText', 'font'].forEach(key => {
             if (typeof source.theme[key] !== 'string') return;
 
-            if ((key === 'bg' || key === 'text') && typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && !CSS.supports('color', source.theme[key])) {
+            if ((key === 'bg' || key === 'text' || key === 'lightBg' || key === 'lightText') && typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && !CSS.supports('color', source.theme[key])) {
                 skipped += 1;
                 return;
             }
@@ -1216,17 +1278,50 @@ if (gifUploadRemove) {
     gifUploadRemove.addEventListener('click', () => removeUploadedGif());
 }
 
+if (autoThemeCheck) {
+    autoThemeCheck.addEventListener('change', () => {
+        updateTheme('auto', autoThemeCheck.checked);
+        syncSettingsUI();
+    });
+}
+
 if (bgColorPicker) {
     bgColorPicker.addEventListener('input', () => updateTheme('bg', bgColorPicker.value));
 }
 if (bgColorInput) {
     bgColorInput.addEventListener('change', () => updateTheme('bg', bgColorInput.value.trim()));
 }
+if (lightBgColorPicker) {
+    lightBgColorPicker.addEventListener('input', () => updateTheme('lightBg', lightBgColorPicker.value));
+}
+if (lightBgColorInput) {
+    lightBgColorInput.addEventListener('change', () => updateTheme('lightBg', lightBgColorInput.value.trim()));
+}
 if (textColorPicker) {
     textColorPicker.addEventListener('input', () => updateTheme('text', textColorPicker.value));
 }
 if (textColorInput) {
     textColorInput.addEventListener('change', () => updateTheme('text', textColorInput.value.trim()));
+}
+if (lightTextColorPicker) {
+    lightTextColorPicker.addEventListener('input', () => updateTheme('lightText', lightTextColorPicker.value));
+}
+if (lightTextColorInput) {
+    lightTextColorInput.addEventListener('change', () => updateTheme('lightText', lightTextColorInput.value.trim()));
+}
+
+if (typeof window !== 'undefined' && window.matchMedia) {
+    const systemThemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = () => {
+        if (config.theme?.auto) {
+            applyTheme(config.theme);
+        }
+    };
+    if (typeof systemThemeMedia.addEventListener === 'function') {
+        systemThemeMedia.addEventListener('change', handleSystemThemeChange);
+    } else if (typeof systemThemeMedia.addListener === 'function') {
+        systemThemeMedia.addListener(handleSystemThemeChange);
+    }
 }
 if (fontSelect) {
     fontSelect.addEventListener('change', () => updateTheme('font', fontSelect.value));
