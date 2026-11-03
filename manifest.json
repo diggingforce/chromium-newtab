@@ -11,5 +11,19 @@
   "icons": {
     "128": "assets/icon.png"
   },
-  "permissions": ["storage", "search"]
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "chromium-newtab@diggingforce",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
+  "permissions": [
+    "storage",
+    "search"
+  ]
 }
