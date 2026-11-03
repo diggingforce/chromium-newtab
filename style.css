@@ -304,6 +304,24 @@ body {
         flex: 1;
     }
 
+    .gif-upload-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+        color: var(--muted-foreground);
+    }
+
+    .gif-upload-hint {
+        margin: 0;
+    }
+
+    #gif-upload-status {
+        margin: 0;
+    }
+
     .color-picker-wrapper {
         display: flex;
         align-items: center;
@@ -443,6 +461,20 @@ body {
 .btn-small:hover {
     color: var(--foreground);
     border-color: var(--border-hover);
+}
+
+.btn-small:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn-small[hidden] {
+    display: none;
+}
+
+.btn-small:disabled:hover {
+    color: var(--muted-foreground);
+    border-color: var(--border);
 }
 
 .btn-del {

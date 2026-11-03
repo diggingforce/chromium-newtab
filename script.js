@@ -8,6 +8,11 @@ const showSearchAreaCheck = document.getElementById('show-search-area');
 const showGifCheck = document.getElementById('show-gif');
 const gifSource = document.getElementById('gif-source');
 const gifDone = document.getElementById('gif-done');
+const gifUploadBtn = document.getElementById('gif-upload-btn');
+const gifUploadRemove = document.getElementById('gif-upload-remove');
+const gifUploadFile = document.getElementById('gif-upload-file');
+const gifUploadName = document.getElementById('gif-upload-name');
+const gifUploadStatus = document.getElementById('gif-upload-status');
 
 const bgColorPicker = document.getElementById('bg-color-picker');
 const bgColorInput = document.getElementById('bg-color');
@@ -45,6 +50,25 @@ let defaultConfig = {};
 let draggedCategoryIndex = null;
 let draggedShortcut = null;
 let backupStatusTimer = null;
+let gifUploadStatusTimer = null;
+let uploadedGif = null;
+let uploadedGifUrl = null;
+let gifUploadInProgress = false;
+
+const GIF_DB_NAME = 'chromium-newtab-assets';
+const GIF_DB_VERSION = 1;
+const GIF_STORE_NAME = 'assets';
+const GIF_STORE_KEY = 'gif';
+const MAX_GIF_BYTES = 10 * 1024 * 1024;
+const SUPPORTED_GIF_TYPES = new Set([
+    'image/gif',
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/avif'
+]);
+const SUPPORTED_GIF_EXTENSIONS = ['.gif', '.png', '.jpg', '.jpeg', '.webp', '.avif'];
+const TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 function applyCachedState() {
     try {
@@ -59,13 +83,258 @@ function applyCachedState() {
         if (gifBox) gifBox.style.display = 'none';
         if (gif) gif.style.display = 'none';
     } else {
-        const cachedGif = localStorage.getItem('newtab_gif');
-        if (gif) {
+        let hasUploadedGif = false;
+        try {
+            hasUploadedGif = localStorage.getItem('newtab_gif_uploaded') === 'true';
+        } catch (e) {}
+        if (gif && !hasUploadedGif) {
+            const cachedGif = localStorage.getItem('newtab_gif');
             gif.src = cachedGif || 'gif.gif';
+        } else if (gif) {
+            gif.src = TRANSPARENT_PIXEL;
         }
     }
 }
 applyCachedState();
+
+function openGifDatabase() {
+    return new Promise((resolve, reject) => {
+        if (!globalThis.indexedDB) {
+            reject(new Error('IndexedDB is not available'));
+            return;
+        }
+
+        const request = indexedDB.open(GIF_DB_NAME, GIF_DB_VERSION);
+        request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(GIF_STORE_NAME)) {
+                db.createObjectStore(GIF_STORE_NAME);
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('Could not open image storage'));
+    });
+}
+
+async function gifStoreRequest(mode, action) {
+    const db = await openGifDatabase();
+
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = (callback, value) => {
+            if (settled) return;
+            settled = true;
+            try {
+                db.close();
+            } catch (e) {}
+            callback(value);
+        };
+
+        let transaction;
+        try {
+            transaction = db.transaction(GIF_STORE_NAME, mode);
+        } catch (e) {
+            finish(reject, e);
+            return;
+        }
+
+        let request;
+        try {
+            request = action(transaction.objectStore(GIF_STORE_NAME));
+        } catch (e) {
+            finish(reject, e);
+            return;
+        }
+
+        let result;
+        request.onsuccess = () => {
+            result = request.result;
+        };
+        request.onerror = () => finish(reject, request.error || new Error('Image storage error'));
+        transaction.oncomplete = () => finish(resolve, result);
+        transaction.onerror = () => finish(reject, transaction.error || new Error('Image storage error'));
+        transaction.onabort = () => finish(reject, transaction.error || new Error('Image storage aborted'));
+    });
+}
+
+async function readUploadedGif() {
+    const asset = await gifStoreRequest('readonly', store => store.get(GIF_STORE_KEY));
+    if (!asset || !asset.blob) return null;
+    return asset;
+}
+
+function clearUploadedGifCache() {
+    if (uploadedGifUrl) {
+        URL.revokeObjectURL(uploadedGifUrl);
+        uploadedGifUrl = null;
+    }
+    uploadedGif = null;
+    try {
+        localStorage.removeItem('newtab_gif_uploaded');
+    } catch (e) {}
+}
+
+function setUploadedGif(asset) {
+    clearUploadedGifCache();
+    uploadedGif = {
+        name: typeof asset.name === 'string' && asset.name ? asset.name : 'uploaded image',
+        type: typeof asset.type === 'string' ? asset.type : '',
+        size: Number(asset.size) || 0
+    };
+    uploadedGifUrl = URL.createObjectURL(asset.blob);
+    if (gif) gif.src = uploadedGifUrl;
+}
+
+async function restoreUploadedGif() {
+    try {
+        const asset = await readUploadedGif();
+        if (!asset) {
+            clearUploadedGifCache();
+            return;
+        }
+        setUploadedGif(asset);
+        try {
+            localStorage.setItem('newtab_gif_uploaded', 'true');
+        } catch (e) {}
+    } catch (e) {
+        console.warn('Could not load uploaded gif:', e);
+        clearUploadedGifCache();
+    }
+}
+
+function isSupportedGifFile(file) {
+    const type = String(file.type || '').toLowerCase();
+    if (SUPPORTED_GIF_TYPES.has(type)) return true;
+
+    const name = String(file.name || '').toLowerCase();
+    return SUPPORTED_GIF_EXTENSIONS.some(ext => name.endsWith(ext));
+}
+
+function formatFileSize(bytes) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+}
+
+function setGifUploadStatus(message, isError = false) {
+    if (!gifUploadStatus) return;
+
+    gifUploadStatus.textContent = message;
+    gifUploadStatus.classList.toggle('error', Boolean(isError));
+
+    if (gifUploadStatusTimer) clearTimeout(gifUploadStatusTimer);
+    gifUploadStatusTimer = setTimeout(() => {
+        gifUploadStatus.textContent = '';
+        gifUploadStatus.classList.remove('error');
+    }, 6000);
+}
+
+function updateGifUploadUI() {
+    const hasUpload = Boolean(uploadedGif);
+
+    if (gifUploadName) {
+        gifUploadName.textContent = hasUpload ? uploadedGif.name : 'no file selected';
+        gifUploadName.title = hasUpload ? uploadedGif.name : '';
+    }
+    if (gifUploadRemove) gifUploadRemove.hidden = !hasUpload;
+    if (gifUploadBtn) {
+        gifUploadBtn.textContent = hasUpload ? 'replace' : 'choose file';
+        gifUploadBtn.disabled = gifUploadInProgress;
+    }
+}
+
+async function handleGifUpload(file) {
+    if (!file || gifUploadInProgress) {
+        if (gifUploadFile) gifUploadFile.value = '';
+        return;
+    }
+
+    try {
+        if (!isSupportedGifFile(file)) {
+            setGifUploadStatus('unsupported file. choose a gif, png, jpg, webp or avif image', true);
+            return;
+        }
+        if (!file.size) {
+            setGifUploadStatus('file is empty', true);
+            return;
+        }
+        if (file.size > MAX_GIF_BYTES) {
+            setGifUploadStatus(`file is too large. max size is ${formatFileSize(MAX_GIF_BYTES)}`, true);
+            return;
+        }
+
+        gifUploadInProgress = true;
+        updateGifUploadUI();
+        setGifUploadStatus('saving...');
+
+        const asset = {
+            blob: file,
+            name: file.name || 'uploaded image',
+            type: file.type || '',
+            size: file.size
+        };
+
+        await gifStoreRequest('readwrite', store => store.put(asset, GIF_STORE_KEY));
+        setUploadedGif(asset);
+        try {
+            localStorage.setItem('newtab_gif_uploaded', 'true');
+        } catch (e) {}
+        syncSettingsUI();
+        render(config);
+        setGifUploadStatus(`using ${asset.name} (${formatFileSize(asset.size)})`);
+    } catch (e) {
+        console.warn('Could not save uploaded gif:', e);
+        setGifUploadStatus('could not save the image. try again or use a URL.', true);
+    } finally {
+        gifUploadInProgress = false;
+        updateGifUploadUI();
+        if (gifUploadFile) gifUploadFile.value = '';
+    }
+}
+
+async function removeUploadedGif({ silent = false } = {}) {
+    if (!uploadedGif && !uploadedGifUrl) return true;
+
+    try {
+        await gifStoreRequest('readwrite', store => store.delete(GIF_STORE_KEY));
+    } catch (e) {
+        console.warn('Could not delete uploaded gif:', e);
+        if (!silent) setGifUploadStatus('could not remove the uploaded image', true);
+        return false;
+    }
+
+    clearUploadedGifCache();
+    try {
+        if (config.gif) {
+            localStorage.setItem('newtab_gif', config.gif);
+        } else {
+            localStorage.removeItem('newtab_gif');
+        }
+    } catch (e) {}
+
+    syncSettingsUI();
+    render(config);
+    if (!silent) setGifUploadStatus('uploaded image removed');
+    return true;
+}
+
+async function applyGifSource() {
+    if (!gifSource) return;
+
+    const value = gifSource.value.trim();
+
+    if (uploadedGif || uploadedGifUrl) {
+        if (value === (config.gif || 'gif.gif')) {
+            setGifUploadStatus('uploaded image is active. use remove to delete it.');
+            return;
+        }
+
+        const removed = await removeUploadedGif({ silent: true });
+        if (!removed) return;
+    }
+
+    await updateSettings('gif', value);
+}
 
 async function init() {
     try {
@@ -124,6 +393,7 @@ async function init() {
     delete config.settings.gif;
     if (defaultConfig.settings) delete defaultConfig.settings.gif;
 
+    await restoreUploadedGif();
     syncSettingsUI();
     render(config);
     renderCategoryToggles();
@@ -139,6 +409,7 @@ function syncSettingsUI() {
     if (gifSource) gifSource.value = config.gif || 'gif.gif';
     if (autohideSettingsCheck) autohideSettingsCheck.checked = Boolean(config.settings['autohide-settings']);
 
+    updateGifUploadUI();
     applyAutohide(config.settings['autohide-settings']);
     applyTheme(config.theme);
 }
@@ -211,13 +482,24 @@ function isSectionVisible(settings, title) {
 
 function render(data) {
     if (data.title) document.title = data.title;
-    const targetGif = data.gif || 'gif.gif';
-    if (gif && gif.getAttribute('src') !== targetGif) {
-        gif.src = targetGif;
+
+    if (uploadedGifUrl) {
+        if (gif && gif.getAttribute('src') !== uploadedGifUrl) {
+            gif.src = uploadedGifUrl;
+        }
+        try {
+            localStorage.setItem('newtab_gif_uploaded', 'true');
+        } catch (e) {}
+    } else {
+        const targetGif = data.gif || 'gif.gif';
+        if (gif && gif.getAttribute('src') !== targetGif) {
+            gif.src = targetGif;
+        }
+        try {
+            localStorage.setItem('newtab_gif', targetGif);
+            localStorage.removeItem('newtab_gif_uploaded');
+        } catch (e) {}
     }
-    try {
-        localStorage.setItem('newtab_gif', targetGif);
-    } catch (e) {}
 
     const settings = data.settings || {};
     const showSearchArea = settings['show-search-area'] !== false;
@@ -780,6 +1062,12 @@ async function handleImportFile(file) {
             return;
         }
 
+        const removedUpload = await removeUploadedGif({ silent: true });
+        if (!removedUpload) {
+            setBackupStatus('import failed: could not clear uploaded image', true);
+            return;
+        }
+
         applyImportedConfig(sanitized.config);
 
         const skippedSuffix = sanitized.skipped
@@ -903,12 +1191,29 @@ if (showGifCheck) {
 }
 
 if (gifDone && gifSource) {
-    gifDone.addEventListener('click', () => updateSettings('gif', gifSource.value.trim()));
+    gifDone.addEventListener('click', () => applyGifSource());
     gifSource.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            updateSettings('gif', gifSource.value.trim());
+            applyGifSource();
         }
     });
+}
+
+if (gifUploadBtn && gifUploadFile) {
+    gifUploadBtn.addEventListener('click', () => gifUploadFile.click());
+}
+if (gifUploadFile) {
+    gifUploadFile.addEventListener('change', () => {
+        const file = gifUploadFile.files?.[0];
+        if (file) {
+            handleGifUpload(file);
+        } else {
+            gifUploadFile.value = '';
+        }
+    });
+}
+if (gifUploadRemove) {
+    gifUploadRemove.addEventListener('click', () => removeUploadedGif());
 }
 
 if (bgColorPicker) {

@@ -49,6 +49,16 @@
                         </div>
                     </div>
                     <div class="appearance-row">
+                        <label for="gif-upload-file">upload</label>
+                        <div class="settings-input">
+                            <button type="button" class="btn-small" id="gif-upload-btn">choose file</button>
+                            <button type="button" class="btn-small" id="gif-upload-remove" hidden>remove</button>
+                            <span class="gif-upload-name" id="gif-upload-name">no file selected</span>
+                        </div>
+                    </div>
+                    <p class="backup-hint gif-upload-hint">gif, png, jpg, webp or avif · up to 10 MB. the image stays on your device.</p>
+                    <p class="backup-status" id="gif-upload-status" role="status" aria-live="polite"></p>
+                    <div class="appearance-row">
                         <label for="bg-color">bg color</label>
                         <div class="color-picker-wrapper">
                             <input type="color" id="bg-color-picker" value="#191919">
@@ -77,6 +87,7 @@
                         <input type="checkbox" id="autohide-settings">
                     </div>
                 </div>
+                <input type="file" id="gif-upload-file" accept=".gif,.png,.jpg,.jpeg,.webp,.avif,image/gif,image/png,image/jpeg,image/webp,image/avif" hidden>
             </div>
         </div>
 
