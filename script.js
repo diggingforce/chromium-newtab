@@ -604,7 +604,7 @@ function render(data) {
                     ${(section.links || []).map(link => {
                         const domain = getDomain(link.url);
                         const iconHtml = showFavicons && domain
-                            ? `<img class="link-favicon" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32" alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'; const b=this.nextElementSibling; if(b) b.style.display='inline';"><span class="bullet" style="display:none">•</span>`
+                            ? `<img class="link-favicon" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32" alt="" width="14" height="14" loading="lazy"><span class="bullet" style="display:none">•</span>`
                             : `<span class="bullet">•</span>`;
                         return `
                             <li>
@@ -1294,6 +1294,18 @@ if (showGifCheck) {
 }
 if (showFaviconsCheck) {
     showFaviconsCheck.addEventListener('change', () => updateSettings('show-favicons', showFaviconsCheck.checked));
+}
+
+if (grid) {
+    grid.addEventListener('error', (e) => {
+        if (e.target && e.target.classList && e.target.classList.contains('link-favicon')) {
+            e.target.style.display = 'none';
+            const bullet = e.target.nextElementSibling;
+            if (bullet && bullet.classList.contains('bullet')) {
+                bullet.style.display = '';
+            }
+        }
+    }, true);
 }
 
 if (gifDone && gifSource) {
