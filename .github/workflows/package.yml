@@ -1,0 +1,85 @@
+name: Package & Release Extensions
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Build extension zip packages
+        run: |
+          python3 -c "
+          import zipfile, os, json, subprocess
+
+          files = ['index.html', 'style.css', 'script.js', 'config.json']
+          asset_files = [os.path.join('assets', f) for f in sorted(os.listdir('assets')) if not f.startswith('.') and not f.endswith('.zip') and f != 'demo.png']
+          font_files = [os.path.join('fonts', f) for f in sorted(os.listdir('fonts')) if not f.startswith('.')]
+
+          all_extension_files = files + asset_files + font_files
+
+          # 1. Chromium zip
+          with zipfile.ZipFile('chromium-newtab.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+              z.write('manifest.json')
+              for f in all_extension_files:
+                  z.write(f)
+
+          # 2. Firefox zip
+          firefox_manifest = None
+          try:
+              firefox_manifest = subprocess.check_output(['git', 'show', 'origin/firefox:manifest.json']).decode('utf-8')
+          except Exception as e:
+              print('Warning: could not read origin/firefox:manifest.json:', e)
+
+          if not firefox_manifest:
+              with open('manifest.json', 'r') as f:
+                  m = json.load(f)
+              m['browser_specific_settings'] = {
+                  'gecko': {
+                      'id': 'chromium-newtab@diggingforce',
+                      'strict_min_version': '140.0',
+                      'data_collection_permissions': {'required': ['none']}
+                  }
+              }
+              firefox_manifest = json.dumps(m, indent=2)
+
+          with zipfile.ZipFile('firefox-newtab.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+              z.writestr('manifest.json', firefox_manifest)
+              for f in all_extension_files:
+                  z.write(f)
+
+          print('Built chromium-newtab.zip and firefox-newtab.zip successfully!')
+          "
+
+      - name: Upload zip artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-packages
+          path: |
+            chromium-newtab.zip
+            firefox-newtab.zip
+
+      - name: Attach zips to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            chromium-newtab.zip
+            firefox-newtab.zip
+          generate_release_notes: true
