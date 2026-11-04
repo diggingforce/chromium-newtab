@@ -6,6 +6,7 @@ const grid = document.getElementById('links-grid');
 
 const showSearchAreaCheck = document.getElementById('show-search-area');
 const showGifCheck = document.getElementById('show-gif');
+const showFaviconsCheck = document.getElementById('show-favicons');
 const gifSource = document.getElementById('gif-source');
 const gifDone = document.getElementById('gif-done');
 const gifUploadBtn = document.getElementById('gif-upload-btn');
@@ -31,6 +32,7 @@ const lightTextColorPicker = document.getElementById('light-text-color-picker');
 const lightTextColorInput = document.getElementById('light-text-color');
 
 const fontSelect = document.getElementById('font-select');
+const openNewtabCheck = document.getElementById('open-newtab');
 const autohideSettingsCheck = document.getElementById('autohide-settings');
 
 const categoryTogglesContainer = document.getElementById('category-toggles');
@@ -50,6 +52,8 @@ const browserApi = globalThis.browser ?? globalThis.chrome;
 const FALLBACK_SETTINGS = {
     'show-search-area': true,
     'show-gif': true,
+    'show-favicons': false,
+    'open-newtab': false,
     'autohide-settings': false
 };
 const FALLBACK_THEME = {
@@ -443,6 +447,8 @@ function syncSettingsUI() {
 
     if (showSearchAreaCheck) showSearchAreaCheck.checked = Boolean(config.settings['show-search-area']);
     if (showGifCheck) showGifCheck.checked = Boolean(config.settings['show-gif']);
+    if (showFaviconsCheck) showFaviconsCheck.checked = Boolean(config.settings['show-favicons']);
+    if (openNewtabCheck) openNewtabCheck.checked = Boolean(config.settings['open-newtab']);
     if (gifSource) {
         let currentGif = config.gif || 'assets/gif.gif';
         if (currentGif === 'gif.gif') currentGif = 'assets/gif.gif';
@@ -586,18 +592,28 @@ function render(data) {
     if (gifBox) gifBox.style.display = showGif ? 'inline-flex' : 'none';
     if (gif) gif.style.display = showGif ? 'block' : 'none';
 
+    const showFavicons = settings['show-favicons'] === true;
+    const openNewtab = settings['open-newtab'] === true;
+    const targetAttr = openNewtab ? ' target="_blank" rel="noopener noreferrer"' : '';
+
     if (grid && Array.isArray(data.sections)) {
         grid.innerHTML = data.sections.map((section, idx) => `
             <div class="category-block" data-idx="${idx}">
                 <h2 class="category-title">${esc(section.title)}</h2>
                 <ul>
-                    ${(section.links || []).map(link => `
-                        <li>
-                            <a href="${esc(link.url)}">
-                                <span class="bullet">•</span>${esc(link.name)}
-                            </a>
-                        </li>
-                    `).join('')}
+                    ${(section.links || []).map(link => {
+                        const domain = getDomain(link.url);
+                        const iconHtml = showFavicons && domain
+                            ? `<img class="link-favicon" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32" alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'; const b=this.nextElementSibling; if(b) b.style.display='inline';"><span class="bullet" style="display:none">•</span>`
+                            : `<span class="bullet">•</span>`;
+                        return `
+                            <li>
+                                <a href="${esc(link.url)}"${targetAttr}>
+                                    ${iconHtml}${esc(link.name)}
+                                </a>
+                            </li>
+                        `;
+                    }).join('')}
                 </ul>
             </div>
         `).join('');
@@ -930,6 +946,17 @@ function isSafeUrl(value) {
     if (!normalized) return false;
 
     return !UNSAFE_URL_SCHEMES.some(scheme => normalized.startsWith(scheme));
+}
+
+function getDomain(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string') return '';
+    try {
+        const hasProto = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(rawUrl);
+        const url = new URL(hasProto ? rawUrl : `https://${rawUrl}`);
+        return url.hostname;
+    } catch {
+        return '';
+    }
 }
 
 function sanitizeImportedConfig(raw) {
@@ -1265,6 +1292,9 @@ if (showSearchAreaCheck) {
 if (showGifCheck) {
     showGifCheck.addEventListener('change', () => updateSettings('show-gif', showGifCheck.checked));
 }
+if (showFaviconsCheck) {
+    showFaviconsCheck.addEventListener('change', () => updateSettings('show-favicons', showFaviconsCheck.checked));
+}
 
 if (gifDone && gifSource) {
     gifDone.addEventListener('click', () => applyGifSource());
@@ -1339,6 +1369,9 @@ if (typeof window !== 'undefined' && window.matchMedia) {
 }
 if (fontSelect) {
     fontSelect.addEventListener('change', () => updateTheme('font', fontSelect.value));
+}
+if (openNewtabCheck) {
+    openNewtabCheck.addEventListener('change', () => updateSettings('open-newtab', openNewtabCheck.checked));
 }
 if (autohideSettingsCheck) {
     autohideSettingsCheck.addEventListener('change', () => {

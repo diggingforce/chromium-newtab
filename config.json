@@ -58,6 +58,8 @@
   "settings": {
     "show-search-area": true,
     "show-gif": true,
+    "show-favicons": false,
+    "open-newtab": false,
     "show-social": true,
     "show-media": true,
     "show-search": true,

@@ -139,6 +139,14 @@ body {
     transition: color 0.15s ease;
 }
 
+.category-block a .link-favicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 .category-block a:hover {
     color: var(--foreground);
     text-decoration: underline;
@@ -561,6 +569,38 @@ body {
 
 .backup-status.error {
     color: #ef4444;
+}
+
+.shortcuts-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.shortcuts-options div {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    font-size: 12px;
+    background: var(--bg);
+}
+
+.shortcuts-options label {
+    cursor: pointer;
+    color: var(--muted-foreground);
+    transition: color 0.15s ease;
+    user-select: none;
+}
+
+.shortcuts-options div:hover label {
+    color: var(--foreground);
+}
+
+.shortcuts-options input[type="checkbox"] {
+    cursor: pointer;
 }
 
 .category-card {
