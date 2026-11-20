@@ -24,6 +24,11 @@ export function syncLayoutUI() {
 }
 
 export function setupLayout() {
+    document.getElementById('reset-layout').addEventListener('click', () => {
+        config.layout = normalizeLayout();
+        syncLayoutUI();
+        saveConfig();
+    });
     document.querySelectorAll('[data-layout]').forEach(control => {
         control.addEventListener('input', () => {
             config.layout = normalizeLayout({ ...normalizeLayout(config.layout), [control.dataset.layout]: control.type === 'range' ? Number(control.value) : control.value });
