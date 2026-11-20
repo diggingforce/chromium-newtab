@@ -1,3 +1,4 @@
+import { clearUndo } from './undo.js';
 import { httpUrl } from './search-model.js';
 import { renderBangsEditor } from './bangs.js';
 import { gif, importSettingsFile, backupStatus, FALLBACK_SETTINGS, FALLBACK_THEME, config, setConfig, defaultConfig, state } from './shared.js';
@@ -152,6 +153,7 @@ export function pruneStaleCategorySettings() {
 }
 
 export function applyImportedConfig(imported) {
+    clearUndo();
     const base = Object.keys(defaultConfig).length
         ? JSON.parse(JSON.stringify(defaultConfig))
         : {};

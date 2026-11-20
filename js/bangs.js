@@ -1,3 +1,4 @@
+import { rememberDeletion } from './undo.js';
 import { expandSection } from './settings.js';
 import { config } from './shared.js';
 import { esc } from './backup.js';
@@ -50,7 +51,15 @@ function bindBangForm(form) {
         status.textContent = 'bang updated';
     });
     form.querySelector('.delete-bang').addEventListener('click', () => {
-        if (config.search?.bangs) delete config.search.bangs[form.dataset.key];
+        const key = form.dataset.key;
+        const deleted = config.search?.bangs?.[key];
+        if (deleted) {
+            delete config.search.bangs[key];
+            rememberDeletion('bang', () => {
+                if (Object.hasOwn(config.search.bangs, key)) return false;
+                config.search.bangs[key] = deleted;
+            });
+        }
         saveConfig();
         form.remove();
     });

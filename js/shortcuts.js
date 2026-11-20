@@ -1,3 +1,4 @@
+import { rememberDeletion } from './undo.js';
 import { input, gif, gifBox, grid, categoryTogglesContainer, categoriesEditorContainer, config, state } from './shared.js';
 import { applyAutohide } from './appearance.js';
 import { saveConfig, updateSettings } from './storage.js';
@@ -259,7 +260,8 @@ export function renderCategoriesEditor() {
 
         const delCatBtn = card.querySelector('.del-cat-btn');
         delCatBtn.addEventListener('click', () => {
-            config.sections.splice(sIdx, 1);
+            const [deleted] = config.sections.splice(sIdx, 1);
+            rememberDeletion('category', () => { config.sections.splice(Math.min(sIdx, config.sections.length), 0, deleted); });
             saveConfig();
             render(config);
             renderCategoryToggles();
@@ -351,7 +353,12 @@ export function renderCategoriesEditor() {
             });
 
             delLinkBtn.addEventListener('click', () => {
-                config.sections[sIdx].links.splice(lIdx, 1);
+                const section = config.sections[sIdx];
+                const [deleted] = section.links.splice(lIdx, 1);
+                rememberDeletion('shortcut', () => {
+                    if (!config.sections.includes(section)) return false;
+                    section.links.splice(Math.min(lIdx, section.links.length), 0, deleted);
+                });
                 saveConfig();
                 render(config);
                 renderCategoriesEditor();

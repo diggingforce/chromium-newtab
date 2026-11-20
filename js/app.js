@@ -1,3 +1,4 @@
+import { setupUndo } from './undo.js';
 import { setupSettings, expandSection } from './settings.js';
 import { setupSuggestions } from './suggestions.js';
 import { setupBangsEditor } from './bangs.js';
@@ -160,6 +161,7 @@ if (importSettingsBtn && importSettingsFile) {
     });
 }
 
+setupUndo();
 setupSettings();
 setupSuggestions();
 setupBangsEditor();
