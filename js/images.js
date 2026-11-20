@@ -4,6 +4,19 @@ import { render } from './shortcuts.js';
 import { updateSettings } from './storage.js';
 import { applyCachedLayout } from './layout.js';
 
+let imageChannel;
+let imageRevision = 0;
+
+export function setupImageSync() {
+    if (typeof BroadcastChannel === 'undefined') return;
+    imageChannel = new BroadcastChannel('chromium-newtab-images');
+    imageChannel.addEventListener('message', async () => {
+        await restoreUploadedGif();
+        updateGifUploadUI();
+        render(config);
+    });
+}
+
 export function applyCachedState() {
     applyCachedLayout();
     try {
@@ -99,6 +112,7 @@ export async function readUploadedGif() {
 }
 
 export function clearUploadedGifCache() {
+    imageRevision++;
     if (state.uploadedGifUrl) {
         URL.revokeObjectURL(state.uploadedGifUrl);
         state.uploadedGifUrl = null;
@@ -121,8 +135,10 @@ export function setUploadedGif(asset) {
 }
 
 export async function restoreUploadedGif() {
+    const revision = ++imageRevision;
     try {
         const asset = await readUploadedGif();
+        if (revision !== imageRevision) return;
         if (!asset) {
             clearUploadedGifCache();
             return;
@@ -132,6 +148,7 @@ export async function restoreUploadedGif() {
             localStorage.setItem('newtab_gif_uploaded', 'true');
         } catch (e) {}
     } catch (e) {
+        if (revision !== imageRevision) return;
         console.warn('Could not load uploaded gif:', e);
         clearUploadedGifCache();
     }
@@ -211,6 +228,7 @@ export async function handleGifUpload(file) {
 
         await gifStoreRequest('readwrite', store => store.put(asset, GIF_STORE_KEY));
         setUploadedGif(asset);
+        imageChannel?.postMessage('changed');
         try {
             localStorage.setItem('newtab_gif_uploaded', 'true');
         } catch (e) {}
@@ -239,6 +257,7 @@ export async function removeUploadedGif({ silent = false } = {}) {
     }
 
     clearUploadedGifCache();
+    imageChannel?.postMessage('changed');
     try {
         if (config.gif) {
             localStorage.setItem('newtab_gif', config.gif);
@@ -267,7 +286,6 @@ export async function applyGifSource() {
             setGifUploadStatus('uploaded image is active. use remove to delete it.');
             return;
         }
-
     }
 
     const normalizedValue = value === 'gif.gif' ? 'assets/gif.gif' : value;
@@ -276,7 +294,7 @@ export async function applyGifSource() {
     if (!saved) {
         if (config.gif === normalizedValue) config.gif = previous;
         render(config);
-        setGifUploadStatus('could not save the image URL. your uploaded image was kept. try again after resolving the save status.', true);
+        setGifUploadStatus(hasUpload ? 'could not save the image URL. your uploaded image was kept. try again after resolving the save status.' : 'could not save the image URL. resolve the save status and try again.', true);
         return;
     }
     if (hasUpload && !await removeUploadedGif({ silent: true })) return;

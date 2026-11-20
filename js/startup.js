@@ -1,7 +1,7 @@
 import { readConfig, reportReadError, setupStorage, finishStorageInitialization } from './storage.js';
 import { renderBangsEditor } from './bangs.js';
 import { gif, browserApi, FALLBACK_SETTINGS, FALLBACK_THEME, config, setConfig, defaultConfig, setDefaultConfig } from './shared.js';
-import { restoreUploadedGif } from './images.js';
+import { restoreUploadedGif, setupImageSync } from './images.js';
 import { syncSettingsUI } from './appearance.js';
 import { render, renderCategoryToggles, renderCategoriesEditor } from './shortcuts.js';
 
@@ -67,6 +67,7 @@ export async function init() {
         config.gif = 'assets/gif.gif';
     }
 
+    setupImageSync();
     await restoreUploadedGif();
     syncSettingsUI();
     render(config);
