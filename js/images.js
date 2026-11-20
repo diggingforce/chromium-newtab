@@ -2,8 +2,10 @@ import { gif, gifBox, gifSource, gifUploadBtn, gifUploadRemove, gifUploadFile, g
 import { syncSettingsUI, applyTheme } from './appearance.js';
 import { render } from './shortcuts.js';
 import { updateSettings } from './storage.js';
+import { applyCachedLayout } from './layout.js';
 
 export function applyCachedState() {
+    applyCachedLayout();
     try {
         const cachedTheme = localStorage.getItem('newtab_theme');
         if (cachedTheme) {

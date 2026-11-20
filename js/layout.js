@@ -2,8 +2,9 @@ import { config } from './shared.js';
 import { normalizeLayout } from './layout-model.js';
 import { saveConfig } from './storage.js';
 
-export function applyLayout() {
-    const layout = normalizeLayout(config.layout);
+export function applyLayout(source = config.layout) {
+    const layout = normalizeLayout(source);
+    try { localStorage.setItem('newtab_layout', JSON.stringify(layout)); } catch {}
     const root = document.documentElement;
     for (const [key, css] of [['imageWidth', 'image-width'], ['gap', 'layout-gap'], ['pageWidth', 'page-width']]) root.style.setProperty(`--${css}`, `${layout[key]}px`);
     root.style.setProperty('--columns', layout.columns);
@@ -11,6 +12,13 @@ export function applyLayout() {
     root.style.setProperty('--image-fit', layout.imageFit);
     document.querySelector('main').dataset.imagePosition = layout.imagePosition;
     document.querySelector('.gif-box').classList.toggle('fixed-ratio', layout.imageRatio !== 'natural');
+}
+
+export function applyCachedLayout() {
+    try {
+        const cached = localStorage.getItem('newtab_layout');
+        if (cached) applyLayout(JSON.parse(cached));
+    } catch {}
 }
 
 export function syncLayoutUI() {
