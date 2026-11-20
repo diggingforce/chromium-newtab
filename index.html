@@ -10,15 +10,26 @@
 
 <body>
     <button type="button" id="open-settings">settings</button>
-    <div id="settings" class="hidden">
+    <dialog id="settings" class="hidden" aria-labelledby="settings-title">
         <div class="top">
-            <h2>Settings</h2>
+            <h2 id="settings-title">Settings</h2>
             <button type="button" id="close-settings">close</button>
         </div>
 
+        <div class="save-actions">
+            <p id="save-status" class="backup-status" role="status" aria-live="polite"></p>
+            <button type="button" id="reload-settings" class="btn-small" hidden>reload settings</button>
+            <button type="button" id="retry-save" class="btn-small" hidden>retry saving</button>
+            <button type="button" id="load-remote" class="btn-small" hidden>load saved settings</button>
+            <button type="button" id="keep-local" class="btn-small" hidden>keep my edits</button>
+        </div>
+        <div class="undo-actions">
+            <button type="button" class="btn-small" id="undo-delete" disabled>undo deletion</button>
+            <span id="undo-status" class="backup-status" role="status" aria-live="polite"></span>
+        </div>
         <div class="settings-section" id="section-visibility">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▼</span> Visibility</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▼</span> Visibility</button></h3>
             </div>
             <div class="settings-section-content">
                 <div class="settings" id="visibility-toggles">
@@ -37,7 +48,7 @@
 
         <div class="settings-section collapsed" id="section-appearance">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▶</span> Appearance</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Appearance</button></h3>
             </div>
             <div class="settings-section-content">
                 <div class="appearance-grid">
@@ -105,6 +116,11 @@
                         <input type="checkbox" id="show-favicons">
                     </div>
                     <div class="appearance-row">
+                        <label for="favicon-source">icon source</label>
+                        <select id="favicon-source"><option value="remote">local icons + Google fallback</option><option value="local">local icons only</option></select>
+                    </div>
+                    <p class="backup-hint">upload icons beside each shortcut. local-only mode makes no requests for favicons. Google fallback shares shortcut domains with Google.</p>
+                    <div class="appearance-row">
                         <label for="autohide-settings">autohide btn</label>
                         <input type="checkbox" id="autohide-settings">
                     </div>
@@ -113,9 +129,25 @@
             </div>
         </div>
 
+        <div class="settings-section collapsed" id="section-layout">
+            <div class="settings-section-header">
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle" aria-expanded="false" aria-controls="layout-content"><span class="section-arrow">▶</span> Image &amp; layout</button></h3>
+            </div>
+            <div class="settings-section-content appearance-grid" id="layout-content">
+                <label class="layout-control" for="image-width">image width <input id="image-width" data-layout="imageWidth" type="range" min="120" max="600" step="10"><output for="image-width"></output></label>
+                <label class="layout-control" for="image-ratio">image ratio <select id="image-ratio" data-layout="imageRatio"><option value="natural">original</option><option value="square">square</option><option value="portrait">portrait</option><option value="landscape">landscape</option></select></label>
+                <label class="layout-control" for="image-fit">image fit <select id="image-fit" data-layout="imageFit"><option value="contain">contain</option><option value="cover">crop to fill</option></select></label>
+                <label class="layout-control" for="image-position">image position <select id="image-position" data-layout="imagePosition"><option value="left">left</option><option value="right">right</option><option value="above">above</option></select></label>
+                <label class="layout-control" for="layout-gap">spacing <input id="layout-gap" data-layout="gap" type="range" min="16" max="96"><output for="layout-gap"></output></label>
+                <label class="layout-control" for="layout-columns">columns <input id="layout-columns" data-layout="columns" type="range" min="1" max="4"><output for="layout-columns"></output></label>
+                <label class="layout-control" for="page-width">page width <input id="page-width" data-layout="pageWidth" type="range" min="700" max="1400" step="20"><output for="page-width"></output></label>
+                <div class="editor-actions"><button type="button" id="reset-layout" class="btn-small">reset to defaults</button></div>
+            </div>
+        </div>
+
         <div class="settings-section collapsed" id="section-shortcuts">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▶</span> Shortcuts</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Shortcuts</button></h3>
                 <button type="button" id="add-category-btn" class="btn-small">+ add category</button>
             </div>
             <div class="settings-section-content">
@@ -129,9 +161,20 @@
             </div>
         </div>
 
+        <div class="settings-section collapsed" id="section-bangs">
+            <div class="settings-section-header">
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Bangs</button></h3>
+                <button type="button" id="add-bang" class="btn-small">+ add bang</button>
+            </div>
+            <div class="settings-section-content">
+                <p class="backup-hint">use !command followed by your search. append the query to the URL or place {query} anywhere in it.</p>
+                <div id="bangs-editor"></div>
+            </div>
+        </div>
+
         <div class="settings-section collapsed" id="section-backup">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▶</span> Import / Export</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Import / Export</button></h3>
             </div>
             <div class="settings-section-content">
                 <div class="backup-grid">
@@ -148,25 +191,28 @@
                 <input type="file" id="import-settings-file" accept=".json,application/json" hidden>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <main class="startpage-container">
         <div class="gif-box">
-            <img id="preview-gif" alt="gif">
+            <img id="preview-gif" alt="">
         </div>
 
         <section class="content-column">
             <div class="links-grid" id="links-grid"></div>
 
+            <div class="search-wrapper">
             <div class="search-area">
                 <span class="search-prompt">&gt; find :</span>
-                <input type="text" id="find-input" placeholder="type here" autofocus autocomplete="off" spellcheck="false">
+                <input type="text" id="find-input" role="combobox" aria-label="Search the web or your shortcuts" aria-autocomplete="list" aria-expanded="false" aria-controls="shortcut-suggestions" placeholder="type here" autofocus autocomplete="off" spellcheck="false">
                 <span class="search-badge" id="engine-badge">[/]</span>
+            </div>
+            <ul id="shortcut-suggestions" role="listbox" aria-label="Matching shortcuts" hidden></ul>
             </div>
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 
 </html>
