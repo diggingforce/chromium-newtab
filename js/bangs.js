@@ -47,8 +47,8 @@ function bindBangForm(form) {
         if (oldKey !== key) delete config.search.bangs[oldKey];
         config.search.bangs[key] = { name, url, ...(home ? { home } : {}) };
         form.dataset.key = key;
-        await saveConfig();
-        status.textContent = 'bang updated';
+        const saved = await saveConfig();
+        status.textContent = saved ? 'bang updated' : 'bang updated in this tab; check the save status above';
     });
     form.querySelector('.delete-bang').addEventListener('click', () => {
         const key = form.dataset.key;

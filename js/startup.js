@@ -1,3 +1,4 @@
+import { readConfig, reportReadError, setupStorage } from './storage.js';
 import { renderBangsEditor } from './bangs.js';
 import { gif, browserApi, FALLBACK_SETTINGS, FALLBACK_THEME, config, setConfig, defaultConfig, setDefaultConfig } from './shared.js';
 import { restoreUploadedGif } from './images.js';
@@ -15,9 +16,9 @@ export async function init() {
         console.warn('Could not fetch config.json:', e);
     }
 
-    if (browserApi?.storage?.local) {
+    {
         try {
-            const saved = await browserApi.storage.local.get('config');
+            const saved = { config: await readConfig() };
             if (saved?.config) {
                 setConfig({
                     ...config,
@@ -35,6 +36,7 @@ export async function init() {
             }
         } catch (e) {
             console.warn('Could not read storage:', e);
+            reportReadError();
         }
     }
 
@@ -72,4 +74,5 @@ export async function init() {
     renderCategoryToggles();
     renderCategoriesEditor();
     renderBangsEditor();
+    setupStorage();
 }

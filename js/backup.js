@@ -139,7 +139,7 @@ export function sanitizeImportedConfig(raw) {
 }
 
 export function pruneStaleCategorySettings() {
-    const keep = new Set(['show-search-area', 'show-gif']);
+    const keep = new Set(['show-search-area', 'show-gif', 'show-favicons']);
     config.sections.forEach(section => {
         keep.add(sectionKey(section.title));
         keep.add(legacySectionKey(section.title));
@@ -152,7 +152,7 @@ export function pruneStaleCategorySettings() {
     });
 }
 
-export function applyImportedConfig(imported) {
+export async function applyImportedConfig(imported) {
     clearUndo();
     const base = Object.keys(defaultConfig).length
         ? JSON.parse(JSON.stringify(defaultConfig))
@@ -180,12 +180,13 @@ export function applyImportedConfig(imported) {
     }
 
     pruneStaleCategorySettings();
-    saveConfig();
+    const saved = await saveConfig();
     syncSettingsUI();
     render(config);
     renderCategoryToggles();
     renderCategoriesEditor();
     renderBangsEditor();
+    return saved;
 }
 
 export function setBackupStatus(message, isError = false) {
@@ -254,7 +255,11 @@ export async function handleImportFile(file) {
             return;
         }
 
-        applyImportedConfig(sanitized.config);
+        const saved = await applyImportedConfig(sanitized.config);
+        if (!saved) {
+            setBackupStatus('settings applied but could not be saved. resolve the save status above.', true);
+            return;
+        }
 
         const skippedSuffix = sanitized.skipped
             ? ` (${sanitized.skipped} invalid item${sanitized.skipped === 1 ? '' : 's'} skipped)`
