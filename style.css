@@ -778,6 +778,7 @@ body {
 
 .layout-control { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted-foreground); }
 .layout-control input, .layout-control select { flex: 1; min-width: 0; }
+#settings input[type="range"] { padding: 0; border: 0; background: transparent; cursor: pointer; }
 .layout-control output { min-width: 3ch; text-align: right; }
 #settings select { color: var(--foreground); background: var(--bg); font: inherit; padding: 4px; border: 1px solid var(--border-hover); }
 .startpage-container[data-image-position="right"] { flex-direction: row-reverse; }
