@@ -116,6 +116,11 @@
                         <input type="checkbox" id="show-favicons">
                     </div>
                     <div class="appearance-row">
+                        <label for="favicon-source">icon source</label>
+                        <select id="favicon-source"><option value="remote">local icons + Google fallback</option><option value="local">local icons only</option></select>
+                    </div>
+                    <p class="backup-hint">upload icons beside each shortcut. local-only mode makes no requests for favicons. Google fallback shares shortcut domains with Google.</p>
+                    <div class="appearance-row">
                         <label for="autohide-settings">autohide btn</label>
                         <input type="checkbox" id="autohide-settings">
                     </div>

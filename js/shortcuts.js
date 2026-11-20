@@ -1,3 +1,5 @@
+import { iconSource } from './icon-model.js';
+import { readLocalIcon } from './icons.js';
 import { applyLayout } from './layout.js';
 import { rememberDeletion } from './undo.js';
 import { input, gif, gifBox, grid, categoryTogglesContainer, categoriesEditorContainer, config, state } from './shared.js';
@@ -74,8 +76,9 @@ export function render(data) {
                 <ul>
                     ${(section.links || []).map(link => {
                         const domain = getDomain(link.url);
-                        const iconHtml = showFavicons && domain
-                            ? `<img class="link-favicon" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32" alt="" width="14" height="14" loading="lazy"><span class="bullet" style="display:none">•</span>`
+                        const source = iconSource(link, data.icons?.source, domain);
+                        const iconHtml = showFavicons && source
+                            ? `<img class="link-favicon" src="${esc(source)}" alt="" width="14" height="14" loading="lazy"><span class="bullet" style="display:none">•</span>`
                             : `<span class="bullet">•</span>`;
                         return `
                             <li>
@@ -139,6 +142,10 @@ export function renderCategoriesEditor() {
                         <span class="drag-handle shortcut-drag-handle" title="Drag to rearrange shortcut">•</span>
                         <input type="text" aria-label="Shortcut name" class="shortcut-name" value="${esc(link.name)}" placeholder="Name">
                         <input type="text" aria-label="Shortcut URL" class="shortcut-url" value="${esc(link.url)}" placeholder="https://...">
+                        <button type="button" class="btn-small upload-icon" aria-label="Upload shortcut icon">icon</button>
+                        <input type="file" class="icon-file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/x-icon,image/vnd.microsoft.icon" hidden>
+                        <button type="button" class="btn-small remove-icon" aria-label="Remove shortcut icon" ${link.icon ? '' : 'hidden'}>clear icon</button>
+                        <span class="icon-status" role="status" aria-live="polite"></span>
                         <button type="button" class="btn-small move-link-up" aria-label="Move shortcut up" ${lIdx === 0 ? 'disabled' : ''}>↑</button><button type="button" class="btn-small move-link-down" aria-label="Move shortcut down" ${lIdx === section.links.length - 1 ? 'disabled' : ''}>↓</button>
                         <button type="button" class="btn-small btn-del del-link-btn" aria-label="Delete link" title="Delete link">✕</button>
                     </div>
@@ -273,6 +280,35 @@ export function renderCategoriesEditor() {
         card.querySelectorAll('.shortcut-row').forEach(row => {
             const lIdx = Number(row.dataset.link);
             bindMoveButtons(row, '.move-link-', config.sections[sIdx].links, lIdx);
+            const link = config.sections[sIdx].links[lIdx];
+            const fileInput = row.querySelector('.icon-file');
+            row.querySelector('.upload-icon').addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', async () => {
+                const status = row.querySelector('.icon-status');
+                try {
+                    const file = fileInput.files?.[0];
+                    if (!file) return;
+                    const icon = await readLocalIcon(file);
+                    if (!config.sections.some(section => section.links.includes(link))) return;
+                    link.icon = icon;
+                    config.settings['show-favicons'] = true;
+                    const saved = await saveConfig();
+                    render(config);
+                    row.querySelector('.remove-icon').hidden = false;
+                    status.textContent = saved ? 'icon saved' : 'check save status';
+                    document.getElementById('show-favicons').checked = true;
+                } catch (error) {
+                    status.textContent = error.message || 'could not read image';
+                } finally { fileInput.value = ''; }
+            });
+            row.querySelector('.remove-icon').addEventListener('click', () => {
+                delete link.icon;
+                saveConfig();
+                render(config);
+                row.querySelector('.remove-icon').hidden = true;
+                row.querySelector('.upload-icon').focus();
+                row.querySelector('.icon-status').textContent = 'icon removed';
+            });
             const shortcutHandle = row.querySelector('.shortcut-drag-handle');
             const nameInput = row.querySelector('.shortcut-name');
             const urlInput = row.querySelector('.shortcut-url');

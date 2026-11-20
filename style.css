@@ -789,3 +789,8 @@ body {
     .links-grid { grid-template-columns: repeat(min(var(--columns, 2), 2), minmax(0, 1fr)); }
 }
 @media (max-width: 480px) { .links-grid { grid-template-columns: 1fr; } }
+
+.shortcut-row { flex-wrap: wrap; }
+.shortcut-row input.shortcut-url { flex-basis: 150px; }
+.icon-status { flex-basis: 100%; font-size: 11px; color: var(--muted-foreground); }
+.icon-status:empty { display: none; }

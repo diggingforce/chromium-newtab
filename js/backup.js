@@ -1,3 +1,4 @@
+import { isLocalIcon } from './icon-model.js';
 import { normalizeLayout } from './layout-model.js';
 import { clearUndo } from './undo.js';
 import { httpUrl } from './search-model.js';
@@ -48,6 +49,7 @@ export function sanitizeImportedConfig(raw) {
     if (!isPlainObject(source)) return null;
 
     const result = {};
+    if (isPlainObject(source.icons)) result.icons = { source: source.icons.source === 'local' ? 'local' : 'remote' };
     if (isPlainObject(source.layout)) result.layout = normalizeLayout(source.layout);
     let skipped = 0;
 
@@ -95,7 +97,7 @@ export function sanitizeImportedConfig(raw) {
             const validLinks = links
                 .filter(isPlainObject)
                 .filter(link => typeof link.name === 'string' && typeof link.url === 'string' && isSafeUrl(link.url))
-                .map(link => ({ name: link.name, url: link.url }));
+                .map(link => ({ name: link.name, url: link.url, ...(isLocalIcon(link.icon) ? { icon: link.icon } : {}) }));
 
             skipped += links.length - validLinks.length;
 
