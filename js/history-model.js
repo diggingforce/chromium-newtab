@@ -6,10 +6,13 @@ export function createHistory(limit = 20) {
             if (entries.length > limit) entries.shift();
         },
         undo() {
-            const entry = entries.at(-1);
-            if (!entry || entry.restore() === false) return null;
-            entries.pop();
-            return entry.label;
+            for (let index = entries.length - 1; index >= 0; index--) {
+                const entry = entries[index];
+                if (entry.restore() === false) continue;
+                entries.splice(index, 1);
+                return entry.label;
+            }
+            return null;
         },
         clear() { entries.length = 0; },
         get size() { return entries.length; }

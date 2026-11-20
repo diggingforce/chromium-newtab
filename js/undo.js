@@ -25,7 +25,7 @@ export function setupUndo() {
     document.getElementById('undo-delete').addEventListener('click', () => {
         const label = history.undo();
         if (!label) {
-            updateUndoUI('could not restore: the command already exists');
+            updateUndoUI('could not restore: a command already exists or its category was deleted');
             return;
         }
         saveConfig();
