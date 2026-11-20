@@ -13,6 +13,7 @@ let failed = false;
 let dirty = false;
 let readFailed = false;
 let persistedFingerprint = null;
+let loadingRemote = false;
 
 function showSaveStatus(status) {
     const output = document.getElementById('save-status');
@@ -33,8 +34,10 @@ function showSaveStatus(status) {
 const queue = createSaveQueue(async snapshot => {
     const key = configFingerprint(snapshot);
     if (key === persistedFingerprint) return;
-    ownWrites.add(key);
-    if (ownWrites.size > 30) ownWrites.delete(ownWrites.values().next().value);
+    if (browserApi?.storage?.local) {
+        ownWrites.add(key);
+        if (ownWrites.size > 30) ownWrites.delete(ownWrites.values().next().value);
+    }
     try {
         if (browserApi?.storage?.local) await browserApi.storage.local.set({ config: snapshot });
         else localStorage.setItem('newtab_config', key);
@@ -103,6 +106,23 @@ function receiveRemote(value) {
     } else applyRemote(value);
 }
 
+async function loadRemote() {
+    if (!remoteConfig || loadingRemote) return;
+    loadingRemote = true;
+    document.getElementById('load-remote').disabled = true;
+    document.getElementById('keep-local').disabled = true;
+    try {
+        queue.discard();
+        await queue.idle();
+        const value = remoteConfig;
+        if (value && await queue.save(value) && remoteConfig === value) applyRemote(value);
+    } finally {
+        loadingRemote = false;
+        document.getElementById('load-remote').disabled = false;
+        document.getElementById('keep-local').disabled = false;
+    }
+}
+
 export function setupStorage() {
     browserApi?.storage?.onChanged?.addListener((changes, area) => {
         if (area === 'local' && changes.config?.newValue) receiveRemote(changes.config.newValue);
@@ -114,7 +134,7 @@ export function setupStorage() {
     });
     document.getElementById('reload-settings').addEventListener('click', () => window.location.reload());
     document.getElementById('retry-save').addEventListener('click', saveConfig);
-    document.getElementById('load-remote').addEventListener('click', () => remoteConfig && applyRemote(remoteConfig));
+    document.getElementById('load-remote').addEventListener('click', loadRemote);
     document.getElementById('keep-local').addEventListener('click', () => {
         remoteConfig = null;
         saveConfig();

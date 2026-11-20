@@ -3,6 +3,8 @@ export function createSaveQueue(write, onStatus = () => {}, delay = 180) {
     let running = false;
     let timer;
     let waiters = [];
+    let generation = 0;
+    let idleWaiters = [];
 
     async function flush() {
         clearTimeout(timer);
@@ -12,18 +14,21 @@ export function createSaveQueue(write, onStatus = () => {}, delay = 180) {
         while (pending) {
             const snapshot = pending;
             const callbacks = waiters;
+            const currentGeneration = generation;
             pending = null;
             waiters = [];
             try {
                 await write(snapshot);
-                callbacks.forEach(resolve => resolve(true));
-                onStatus(pending ? 'saving' : 'saved');
+                callbacks.forEach(resolve => resolve(currentGeneration === generation));
+                if (currentGeneration === generation) onStatus(pending ? 'saving' : 'saved');
             } catch (error) {
                 callbacks.forEach(resolve => resolve(false));
-                onStatus('error', error);
+                if (currentGeneration === generation) onStatus('error', error);
             }
         }
         running = false;
+        idleWaiters.forEach(resolve => resolve());
+        idleWaiters = [];
     }
 
     return {
@@ -35,7 +40,11 @@ export function createSaveQueue(write, onStatus = () => {}, delay = 180) {
             return new Promise(resolve => waiters.push(resolve));
         },
         flush,
+        idle() {
+            return running ? new Promise(resolve => idleWaiters.push(resolve)) : Promise.resolve();
+        },
         discard() {
+            generation++;
             clearTimeout(timer);
             timer = null;
             pending = null;
