@@ -1,3 +1,4 @@
+import { bangDestination } from './search-model.js';
 import { input, badge, browserApi, config } from './shared.js';
 
 export function isDirectUrl(val) {
@@ -39,11 +40,8 @@ input.addEventListener('keydown', function (e) {
         if (bangs[prefix]) {
             const query = parts.slice(1).join(' ');
             const bang = bangs[prefix];
-            if (query) {
-                window.location.href = bang.url + encodeURIComponent(query);
-            } else {
-                window.location.href = `https://${bang.name}.com`;
-            }
+            const destination = bangDestination(bang, query);
+            if (destination) window.location.href = destination;
             return;
         }
 
