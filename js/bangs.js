@@ -1,7 +1,7 @@
 import { rememberDeletion } from './undo.js';
 import { expandSection } from './settings.js';
 import { config } from './shared.js';
-import { esc } from './backup.js';
+import { esc } from './utils.js';
 import { httpUrl } from './search-model.js';
 import { saveConfig } from './storage.js';
 

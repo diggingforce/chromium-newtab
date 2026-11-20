@@ -1,6 +1,6 @@
 import { input, config } from './shared.js';
 import { findShortcuts } from './search-model.js';
-import { esc } from './backup.js';
+import { esc } from './utils.js';
 
 let matches = [];
 let selected = -1;
