@@ -4,7 +4,7 @@ import { syncSettingsUI } from './appearance.js';
 import { renderBangsEditor } from './bangs.js';
 import { clearUndo } from './undo.js';
 import { closeSuggestions } from './suggestions.js';
-import { createSaveQueue } from './save-queue.js';
+import { createSaveQueue, configFingerprint } from './save-queue.js';
 
 const ownWrites = new Set();
 let remoteConfig = null;
@@ -29,7 +29,7 @@ function showSaveStatus(status) {
 }
 
 const queue = createSaveQueue(async snapshot => {
-    const key = JSON.stringify(snapshot);
+    const key = configFingerprint(snapshot);
     ownWrites.add(key);
     if (ownWrites.size > 30) ownWrites.delete(ownWrites.values().next().value);
     try {
@@ -86,7 +86,7 @@ function applyRemote(value) {
 }
 
 function receiveRemote(value) {
-    if (!value || ownWrites.has(JSON.stringify(value)) || JSON.stringify(value) === JSON.stringify(config)) return;
+    if (!value || ownWrites.has(configFingerprint(value)) || configFingerprint(value) === configFingerprint(config)) return;
     if (dirty || failed || queue.busy || settingsModal.open) {
         remoteConfig = value;
         queue.discard();
