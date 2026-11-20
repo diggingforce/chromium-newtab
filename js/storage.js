@@ -14,6 +14,8 @@ let dirty = false;
 let readFailed = false;
 let persistedFingerprint = null;
 let loadingRemote = false;
+let initialized = false;
+let initialRemote = null;
 
 function showSaveStatus(status) {
     const output = document.getElementById('save-status');
@@ -96,6 +98,10 @@ function applyRemote(value) {
 
 function receiveRemote(value) {
     if (!value) return;
+    if (!initialized) {
+        initialRemote = value;
+        return;
+    }
     const fingerprint = configFingerprint(value);
     persistedFingerprint = fingerprint;
     if (ownWrites.delete(fingerprint) || fingerprint === configFingerprint(config)) return;
@@ -104,6 +110,15 @@ function receiveRemote(value) {
         queue.discard();
         showSaveStatus('conflict');
     } else applyRemote(value);
+}
+
+export function finishStorageInitialization() {
+    initialized = true;
+    if (initialRemote) {
+        const value = initialRemote;
+        initialRemote = null;
+        receiveRemote(value);
+    }
 }
 
 async function loadRemote() {

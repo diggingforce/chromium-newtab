@@ -1,4 +1,4 @@
-import { readConfig, reportReadError, setupStorage } from './storage.js';
+import { readConfig, reportReadError, setupStorage, finishStorageInitialization } from './storage.js';
 import { renderBangsEditor } from './bangs.js';
 import { gif, browserApi, FALLBACK_SETTINGS, FALLBACK_THEME, config, setConfig, defaultConfig, setDefaultConfig } from './shared.js';
 import { restoreUploadedGif } from './images.js';
@@ -6,6 +6,7 @@ import { syncSettingsUI } from './appearance.js';
 import { render, renderCategoryToggles, renderCategoriesEditor } from './shortcuts.js';
 
 export async function init() {
+    setupStorage();
     try {
         const res = await fetch('config.json');
         if (res.ok) {
@@ -40,9 +41,7 @@ export async function init() {
         }
     }
 
-    if (!config.settings) {
-        config.settings = { ...FALLBACK_SETTINGS };
-    }
+    config.settings = { ...FALLBACK_SETTINGS, ...config.settings };
 
     if (!config.theme) {
         config.theme = { ...FALLBACK_THEME };
@@ -74,5 +73,5 @@ export async function init() {
     renderCategoryToggles();
     renderCategoriesEditor();
     renderBangsEditor();
-    setupStorage();
+    finishStorageInitialization();
 }
