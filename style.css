@@ -777,9 +777,40 @@ body {
 .save-actions p { flex-basis: 100%; }
 
 .layout-control { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted-foreground); }
-.layout-control input, .layout-control select { flex: 1; min-width: 0; }
+.layout-control input[type="range"], .layout-control select { flex: 1; min-width: 0; }
 #settings input[type="range"] { padding: 0; border: 0; background: transparent; cursor: pointer; }
-.layout-control output { min-width: 3ch; text-align: right; }
+.layout-control input.layout-number {
+    width: 48px;
+    flex: 0 0 auto;
+    text-align: center;
+    padding: 3px 4px;
+    font-size: 12px;
+    font-family: inherit;
+    border: 1px solid var(--border-hover);
+    background: var(--bg);
+    color: var(--foreground);
+    border-radius: 0;
+}
+.layout-control input.layout-number:focus {
+    border-color: var(--foreground);
+}
+.layout-control input.layout-number::-webkit-inner-spin-button,
+.layout-control input.layout-number::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.layout-control input.layout-number {
+    -moz-appearance: textfield;
+}
+.layout-control .layout-unit {
+    width: 16px;
+    flex: 0 0 16px;
+    margin-left: -6px;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    text-align: left;
+    user-select: none;
+}
 #settings select { color: var(--foreground); background: var(--bg); font: inherit; padding: 4px; border: 1px solid var(--border-hover); }
 .startpage-container[data-image-position="right"] { flex-direction: row-reverse; }
 .startpage-container[data-image-position="above"] { flex-direction: column; }

@@ -21,12 +21,14 @@ export function applyCachedLayout() {
     } catch {}
 }
 
-export function syncLayoutUI() {
+export function syncLayoutUI(force = false) {
     const layout = normalizeLayout(config.layout);
     document.querySelectorAll('[data-layout]').forEach(control => {
         control.value = layout[control.dataset.layout];
-        const output = document.querySelector(`output[for="${control.id}"]`);
-        if (output) output.textContent = control.value;
+        const numInput = document.querySelector(`input.layout-number[data-layout-number="${control.dataset.layout}"]`);
+        if (numInput && (force || document.activeElement !== numInput)) {
+            numInput.value = layout[control.dataset.layout];
+        }
     });
     applyLayout();
 }
@@ -34,7 +36,7 @@ export function syncLayoutUI() {
 export function setupLayout() {
     document.getElementById('reset-layout').addEventListener('click', () => {
         config.layout = normalizeLayout();
-        syncLayoutUI();
+        syncLayoutUI(true);
         saveConfig();
     });
     document.querySelectorAll('[data-layout]').forEach(control => {
@@ -42,6 +44,43 @@ export function setupLayout() {
             config.layout = normalizeLayout({ ...normalizeLayout(config.layout), [control.dataset.layout]: control.type === 'range' ? Number(control.value) : control.value });
             syncLayoutUI();
             saveConfig();
+        });
+    });
+    document.querySelectorAll('input.layout-number').forEach(numInput => {
+        const key = numInput.dataset.layoutNumber;
+        const slider = document.querySelector(`[data-layout="${key}"]`);
+        const min = Number(numInput.min);
+        const max = Number(numInput.max);
+
+        numInput.addEventListener('input', () => {
+            const raw = numInput.value.trim();
+            if (raw === '') return;
+            const val = Number(raw);
+            if (Number.isFinite(val) && val >= min && val <= max) {
+                config.layout = normalizeLayout({ ...normalizeLayout(config.layout), [key]: val });
+                if (slider) slider.value = val;
+                applyLayout();
+                saveConfig();
+            }
+        });
+
+        const finalize = () => {
+            const current = normalizeLayout(config.layout)[key];
+            const raw = numInput.value.trim();
+            const val = Number(raw);
+            const clamped = Number.isFinite(val) && raw !== '' ? Math.min(max, Math.max(min, Math.round(val))) : current;
+            config.layout = normalizeLayout({ ...normalizeLayout(config.layout), [key]: clamped });
+            syncLayoutUI(true);
+            saveConfig();
+        };
+
+        numInput.addEventListener('change', finalize);
+        numInput.addEventListener('blur', finalize);
+        numInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                finalize();
+                numInput.blur();
+            }
         });
     });
 }
