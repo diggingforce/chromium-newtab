@@ -1,3 +1,4 @@
+import { expandSection } from './settings.js';
 import { config } from './shared.js';
 import { esc } from './backup.js';
 import { httpUrl } from './search-model.js';
@@ -57,6 +58,7 @@ function bindBangForm(form) {
 
 export function setupBangsEditor() {
     document.getElementById('add-bang').addEventListener('click', () => {
+        expandSection(document.getElementById('section-bangs'));
         const editor = document.getElementById('bangs-editor');
         editor.insertAdjacentHTML('beforeend', bangForm());
         const form = editor.lastElementChild;

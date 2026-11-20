@@ -1,3 +1,4 @@
+import { setupSettings, expandSection } from './settings.js';
 import { setupSuggestions } from './suggestions.js';
 import { setupBangsEditor } from './bangs.js';
 import './search.js';
@@ -18,18 +19,13 @@ document.addEventListener('mouseup', () => {
 });
 
 document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-        if (settingsModal && !settingsModal.classList.contains('hidden')) {
-            settingsModal.classList.add('hidden');
-        }
-    }
-
     const isTyping = document.activeElement && (
         document.activeElement.tagName === 'INPUT' ||
-        document.activeElement.tagName === 'TEXTAREA'
+        document.activeElement.tagName === 'TEXTAREA' ||
+        document.activeElement.tagName === 'SELECT' || document.activeElement.isContentEditable
     );
 
-    if (e.key === '/' && !isTyping) {
+    if (e.key === '/' && !isTyping && !settingsModal.open && config.settings?.['show-search-area'] !== false) {
         e.preventDefault();
         input.focus();
     }
@@ -146,35 +142,12 @@ if (addCategoryBtn) {
         if (!Array.isArray(config.sections)) config.sections = [];
         config.sections.push({ title: 'New Category', links: [] });
         const shortcutsSection = document.getElementById('section-shortcuts');
-        if (shortcutsSection && shortcutsSection.classList.contains('collapsed')) {
-            shortcutsSection.classList.remove('collapsed');
-            const arrow = shortcutsSection.querySelector('.section-arrow');
-            if (arrow) arrow.textContent = '▼';
-        }
+        if (shortcutsSection) expandSection(shortcutsSection);
         saveConfig();
         render(config);
         renderCategoryToggles();
         renderCategoriesEditor();
     });
-}
-
-document.querySelectorAll('.settings-section-header').forEach(header => {
-    header.addEventListener('click', (e) => {
-        if (e.target.closest('button')) return;
-        const section = header.closest('.settings-section');
-        if (section) {
-            const isCollapsed = section.classList.toggle('collapsed');
-            const arrow = header.querySelector('.section-arrow');
-            if (arrow) arrow.textContent = isCollapsed ? '▶' : '▼';
-        }
-    });
-});
-
-if (openSettingsBtn && settingsModal) {
-    openSettingsBtn.addEventListener('click', () => settingsModal.classList.toggle('hidden'));
-}
-if (closeSettingsBtn && settingsModal) {
-    closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
 }
 
 if (exportSettingsBtn) {
@@ -187,6 +160,7 @@ if (importSettingsBtn && importSettingsFile) {
     });
 }
 
+setupSettings();
 setupSuggestions();
 setupBangsEditor();
 applyCachedState();

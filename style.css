@@ -760,3 +760,12 @@ body {
 #shortcut-suggestions li { padding: 10px; cursor: pointer; font-size: 12px; overflow-wrap: anywhere; }
 #shortcut-suggestions small { display: block; color: var(--muted-foreground); margin-top: 4px; }
 #shortcut-suggestions li:hover, #shortcut-suggestions [aria-selected="true"] { background: var(--bg-over); outline: 1px solid var(--border-hover); outline-offset: -1px; }
+
+#settings { position: fixed; margin: auto; color: var(--foreground); }
+#settings::backdrop { background: rgb(0 0 0 / 45%); }
+.section-toggle { display: flex; align-items: center; background: transparent; border: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; text-align: left; padding: 4px 0; }
+:focus-visible { outline: 2px solid var(--foreground) !important; outline-offset: 3px; }
+#settings input { min-width: 0; }
+.category-card-header { flex-wrap: wrap; }
+.category-card-header input { min-width: 100px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }

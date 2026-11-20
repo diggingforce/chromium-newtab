@@ -125,17 +125,19 @@ export function renderCategoriesEditor() {
         <div class="category-card" data-section="${sIdx}">
             <div class="category-card-header">
                 <span class="drag-handle" title="Drag to rearrange category">⋮⋮</span>
-                <input type="text" class="category-title-input" value="${esc(section.title)}" placeholder="Category title">
+                <input type="text" aria-label="Category title" class="category-title-input" value="${esc(section.title)}" placeholder="Category title">
+                <button type="button" class="btn-small move-category-up" aria-label="Move category up" ${sIdx === 0 ? 'disabled' : ''}>↑</button><button type="button" class="btn-small move-category-down" aria-label="Move category down" ${sIdx === config.sections.length - 1 ? 'disabled' : ''}>↓</button>
                 <button type="button" class="btn-small add-link-btn">+ link</button>
-                <button type="button" class="btn-small btn-del del-cat-btn" title="Delete category">✕</button>
+                <button type="button" class="btn-small btn-del del-cat-btn" aria-label="Delete category" title="Delete category">✕</button>
             </div>
             <div class="category-shortcuts-list">
                 ${(section.links || []).map((link, lIdx) => `
                     <div class="shortcut-row" data-link="${lIdx}">
                         <span class="drag-handle shortcut-drag-handle" title="Drag to rearrange shortcut">•</span>
-                        <input type="text" class="shortcut-name" value="${esc(link.name)}" placeholder="Name">
-                        <input type="text" class="shortcut-url" value="${esc(link.url)}" placeholder="https://...">
-                        <button type="button" class="btn-small btn-del del-link-btn" title="Delete link">✕</button>
+                        <input type="text" aria-label="Shortcut name" class="shortcut-name" value="${esc(link.name)}" placeholder="Name">
+                        <input type="text" aria-label="Shortcut URL" class="shortcut-url" value="${esc(link.url)}" placeholder="https://...">
+                        <button type="button" class="btn-small move-link-up" aria-label="Move shortcut up" ${lIdx === 0 ? 'disabled' : ''}>↑</button><button type="button" class="btn-small move-link-down" aria-label="Move shortcut down" ${lIdx === section.links.length - 1 ? 'disabled' : ''}>↓</button>
+                        <button type="button" class="btn-small btn-del del-link-btn" aria-label="Delete link" title="Delete link">✕</button>
                     </div>
                 `).join('')}
             </div>
@@ -144,6 +146,7 @@ export function renderCategoriesEditor() {
 
     categoriesEditorContainer.querySelectorAll('.category-card').forEach(card => {
         const sIdx = Number(card.dataset.section);
+        bindMoveButtons(card, '.move-category-', config.sections, sIdx);
         const catHandle = card.querySelector('.category-card-header .drag-handle');
 
         if (catHandle) {
@@ -265,6 +268,7 @@ export function renderCategoriesEditor() {
 
         card.querySelectorAll('.shortcut-row').forEach(row => {
             const lIdx = Number(row.dataset.link);
+            bindMoveButtons(row, '.move-link-', config.sections[sIdx].links, lIdx);
             const shortcutHandle = row.querySelector('.shortcut-drag-handle');
             const nameInput = row.querySelector('.shortcut-name');
             const urlInput = row.querySelector('.shortcut-url');
@@ -354,4 +358,25 @@ export function renderCategoriesEditor() {
             });
         });
     });
+}
+
+function bindMoveButtons(container, prefix, items, index) {
+    for (const [direction, offset] of [['up', -1], ['down', 1]]) {
+        container.querySelector(prefix + direction).addEventListener('click', () => {
+            const destination = index + offset;
+            if (destination < 0 || destination >= items.length) return;
+            [items[index], items[destination]] = [items[destination], items[index]];
+            const sectionIndex = container.closest('[data-section]').dataset.section;
+            saveConfig();
+            render(config);
+            renderCategoryToggles();
+            renderCategoriesEditor();
+            const selector = prefix.includes('category')
+                ? `[data-section="${destination}"] ${prefix}${direction}`
+                : `[data-section="${sectionIndex}"] [data-link="${destination}"] ${prefix}${direction}`;
+            const button = categoriesEditorContainer.querySelector(selector);
+            if (button?.disabled) button.parentElement.querySelector('input')?.focus();
+            else button?.focus();
+        });
+    }
 }

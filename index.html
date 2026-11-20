@@ -10,15 +10,15 @@
 
 <body>
     <button type="button" id="open-settings">settings</button>
-    <div id="settings" class="hidden">
+    <dialog id="settings" class="hidden" aria-labelledby="settings-title">
         <div class="top">
-            <h2>Settings</h2>
+            <h2 id="settings-title">Settings</h2>
             <button type="button" id="close-settings">close</button>
         </div>
 
         <div class="settings-section" id="section-visibility">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▼</span> Visibility</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▼</span> Visibility</button></h3>
             </div>
             <div class="settings-section-content">
                 <div class="settings" id="visibility-toggles">
@@ -37,7 +37,7 @@
 
         <div class="settings-section collapsed" id="section-appearance">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▶</span> Appearance</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Appearance</button></h3>
             </div>
             <div class="settings-section-content">
                 <div class="appearance-grid">
@@ -115,7 +115,7 @@
 
         <div class="settings-section collapsed" id="section-shortcuts">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▶</span> Shortcuts</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Shortcuts</button></h3>
                 <button type="button" id="add-category-btn" class="btn-small">+ add category</button>
             </div>
             <div class="settings-section-content">
@@ -131,7 +131,7 @@
 
         <div class="settings-section collapsed" id="section-bangs">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▶</span> Bangs</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Bangs</button></h3>
                 <button type="button" id="add-bang" class="btn-small">+ add bang</button>
             </div>
             <div class="settings-section-content">
@@ -142,7 +142,7 @@
 
         <div class="settings-section collapsed" id="section-backup">
             <div class="settings-section-header">
-                <div class="settings-subtitle"><span class="section-arrow">▶</span> Import / Export</div>
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Import / Export</button></h3>
             </div>
             <div class="settings-section-content">
                 <div class="backup-grid">
@@ -159,11 +159,11 @@
                 <input type="file" id="import-settings-file" accept=".json,application/json" hidden>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <main class="startpage-container">
         <div class="gif-box">
-            <img id="preview-gif" alt="gif">
+            <img id="preview-gif" alt="">
         </div>
 
         <section class="content-column">
