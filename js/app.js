@@ -1,4 +1,5 @@
 import { setupIcons } from './icons.js';
+import { setupFocus } from './focus.js';
 import { setupLayout } from './layout.js';
 import { setupUndo } from './undo.js';
 import { setupSettings, expandSection } from './settings.js';
@@ -163,6 +164,7 @@ if (importSettingsBtn && importSettingsFile) {
     });
 }
 
+setupFocus();
 setupIcons();
 setupLayout();
 setupUndo();
