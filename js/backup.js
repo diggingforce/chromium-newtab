@@ -31,11 +31,14 @@ export async function applyImportedConfig(imported) {
     setConfig({
         ...base,
         ...imported,
+        search: { ...base.search, ...imported.search },
         settings: {
+            ...FALLBACK_SETTINGS,
             ...(base.settings || {}),
             ...(imported.settings || {})
         },
         theme: {
+            ...FALLBACK_THEME,
             ...(base.theme || {}),
             ...(imported.theme || {})
         }
