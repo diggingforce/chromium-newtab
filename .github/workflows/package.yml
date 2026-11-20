@@ -28,11 +28,16 @@ jobs:
           python3 -c "
           import zipfile, os, json, subprocess
 
-          files = ['index.html', 'style.css', 'script.js', 'config.json']
+          files = ['index.html', 'style.css', 'config.json']
+          if os.path.exists('script.js'):
+              files.append('script.js')
+          js_files = []
+          if os.path.isdir('js'):
+              js_files = [os.path.join('js', f) for f in sorted(os.listdir('js')) if f.endswith('.js')]
           asset_files = [os.path.join('assets', f) for f in sorted(os.listdir('assets')) if not f.startswith('.') and not f.endswith('.zip') and f != 'demo.png']
           font_files = [os.path.join('fonts', f) for f in sorted(os.listdir('fonts')) if not f.startswith('.')]
 
-          all_extension_files = files + asset_files + font_files
+          all_extension_files = files + js_files + asset_files + font_files
 
           # 1. Chromium zip
           with zipfile.ZipFile('chromium-newtab.zip', 'w', zipfile.ZIP_DEFLATED) as z:
