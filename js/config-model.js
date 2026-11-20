@@ -85,6 +85,9 @@ export function sanitizeImportedConfig(raw) {
 
             skipped += entries.length - Object.keys(bangs).length;
             search.bangs = bangs;
+            if (Array.isArray(source.search.bangOrder)) {
+                search.bangOrder = [...new Set(source.search.bangOrder.filter(key => typeof key === 'string' && Object.hasOwn(bangs, key)))];
+            }
         }
 
         if (typeof source.search.default === 'string') {
