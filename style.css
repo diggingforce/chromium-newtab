@@ -441,7 +441,7 @@ body {
     margin-top: 10px;
 }
 
-.settings-section.collapsed .settings-section-content {
+#settings .settings-section.collapsed .settings-section-content {
     display: none;
 }
 
