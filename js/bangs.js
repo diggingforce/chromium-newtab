@@ -14,7 +14,7 @@ export function renderBangsEditor() {
 
 function bangForm(key = '', bang = {}) {
     return `<form class="bang-card" data-key="${esc(key)}">
-        <label>command <input name="command" value="${esc(key)}" placeholder="!docs" required pattern="![A-Za-z0-9_-]+"></label>
+        <label>command <input name="command" value="${esc(key)}" placeholder="!docs" required></label>
         <label>name <input name="name" value="${esc(bang.name || '')}" required></label>
         <label>search URL <input name="url" type="url" value="${esc(bang.url || '')}" placeholder="https://example.org/?q=" required></label>
         <label>homepage (optional) <input name="home" type="url" value="${esc(bang.home || '')}" placeholder="https://example.org/"></label>

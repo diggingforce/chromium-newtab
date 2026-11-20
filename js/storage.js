@@ -11,6 +11,7 @@ let remoteConfig = null;
 let failed = false;
 let dirty = false;
 let readFailed = false;
+let persistedFingerprint = null;
 
 function showSaveStatus(status) {
     const output = document.getElementById('save-status');
@@ -30,11 +31,13 @@ function showSaveStatus(status) {
 
 const queue = createSaveQueue(async snapshot => {
     const key = configFingerprint(snapshot);
+    if (key === persistedFingerprint) return;
     ownWrites.add(key);
     if (ownWrites.size > 30) ownWrites.delete(ownWrites.values().next().value);
     try {
         if (browserApi?.storage?.local) await browserApi.storage.local.set({ config: snapshot });
         else localStorage.setItem('newtab_config', key);
+        persistedFingerprint = key;
     } catch (error) {
         ownWrites.delete(key);
         throw error;
@@ -46,9 +49,11 @@ const queue = createSaveQueue(async snapshot => {
 });
 
 export async function readConfig() {
-    if (browserApi?.storage?.local) return (await browserApi.storage.local.get('config'))?.config;
-    const saved = localStorage.getItem('newtab_config');
-    return saved ? JSON.parse(saved) : null;
+    const value = browserApi?.storage?.local
+        ? (await browserApi.storage.local.get('config'))?.config
+        : JSON.parse(localStorage.getItem('newtab_config') || 'null');
+    persistedFingerprint = value ? configFingerprint(value) : null;
+    return value;
 }
 
 export function reportReadError() {
@@ -86,7 +91,10 @@ function applyRemote(value) {
 }
 
 function receiveRemote(value) {
-    if (!value || ownWrites.has(configFingerprint(value)) || configFingerprint(value) === configFingerprint(config)) return;
+    if (!value) return;
+    const fingerprint = configFingerprint(value);
+    persistedFingerprint = fingerprint;
+    if (ownWrites.delete(fingerprint) || fingerprint === configFingerprint(config)) return;
     if (dirty || failed || queue.busy || settingsModal.open) {
         remoteConfig = value;
         queue.discard();

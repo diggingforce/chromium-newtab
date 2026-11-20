@@ -1,4 +1,4 @@
-import { sectionKey, isSectionVisible } from './shortcuts-model.js';
+import { sectionKey, legacySectionKey, isSectionVisible } from './shortcuts-model.js';
 import { iconSource } from './icon-model.js';
 import { readLocalIcon } from './icons.js';
 import { applyLayout } from './layout.js';
