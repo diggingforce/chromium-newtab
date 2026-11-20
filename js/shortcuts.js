@@ -5,7 +5,7 @@ import { applyLayout } from './layout.js';
 import { rememberDeletion } from './undo.js';
 import { input, gif, gifBox, grid, categoryTogglesContainer, categoriesEditorContainer, config, state } from './shared.js';
 import { applyAutohide } from './appearance.js';
-import { saveConfig, updateSettings } from './storage.js';
+import { saveConfig } from './storage.js';
 import { getDomain, esc, webUrl } from './utils.js';
 
 export function render(data) {

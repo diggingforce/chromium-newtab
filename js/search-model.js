@@ -1,3 +1,5 @@
+import { webUrl } from './utils.js';
+
 export function httpUrl(value) {
     try {
         const url = new URL(value);
@@ -25,5 +27,4 @@ export function findShortcuts(sections, query, limit = 6) {
         .sort((a, b) => Number(normalize(b.name).startsWith(needle)) - Number(normalize(a.name).startsWith(needle)))
         .slice(0, limit);
 }
-import { webUrl } from './utils.js';
 
