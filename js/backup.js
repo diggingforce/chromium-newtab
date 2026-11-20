@@ -1,3 +1,5 @@
+import { httpUrl } from './search-model.js';
+import { renderBangsEditor } from './bangs.js';
 import { gif, importSettingsFile, backupStatus, FALLBACK_SETTINGS, FALLBACK_THEME, config, setConfig, defaultConfig, state } from './shared.js';
 import { removeUploadedGif } from './images.js';
 import { syncSettingsUI } from './appearance.js';
@@ -109,14 +111,14 @@ export function sanitizeImportedConfig(raw) {
             const bangs = {};
 
             entries.forEach(([key, bang]) => {
-                if (!isSafeKey(key)) return;
-                if (isPlainObject(bang) && typeof bang.name === 'string' && typeof bang.url === 'string' && isSafeUrl(bang.url)) {
-                    bangs[key] = { name: bang.name, url: bang.url };
+                if (!isSafeKey(key) || !/^![a-z0-9_-]+$/.test(key)) return;
+                if (isPlainObject(bang) && typeof bang.name === 'string' && typeof bang.url === 'string' && httpUrl(bang.url)) {
+                    bangs[key] = { name: bang.name, url: bang.url, ...(httpUrl(bang.home) ? { home: bang.home } : {}) };
                 }
             });
 
             skipped += entries.length - Object.keys(bangs).length;
-            if (Object.keys(bangs).length) search.bangs = bangs;
+            search.bangs = bangs;
         }
 
         if (typeof source.search.default === 'string') {
@@ -181,6 +183,7 @@ export function applyImportedConfig(imported) {
     render(config);
     renderCategoryToggles();
     renderCategoriesEditor();
+    renderBangsEditor();
 }
 
 export function setBackupStatus(message, isError = false) {

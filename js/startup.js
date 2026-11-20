@@ -1,3 +1,4 @@
+import { renderBangsEditor } from './bangs.js';
 import { gif, browserApi, FALLBACK_SETTINGS, FALLBACK_THEME, config, setConfig, defaultConfig, setDefaultConfig } from './shared.js';
 import { restoreUploadedGif } from './images.js';
 import { syncSettingsUI } from './appearance.js';
@@ -70,4 +71,5 @@ export async function init() {
     render(config);
     renderCategoryToggles();
     renderCategoriesEditor();
+    renderBangsEditor();
 }

@@ -743,3 +743,14 @@ body {
 .hidden {
     display: none;
 }
+
+.bang-card {
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--border);
+    padding: 10px;
+    margin-top: 10px;
+}
+.bang-card label { display: grid; gap: 4px; font-size: 12px; }
+.bang-card input { width: 100%; min-width: 0; }
+.editor-actions { display: flex; gap: 8px; }
