@@ -754,3 +754,9 @@ body {
 .bang-card label { display: grid; gap: 4px; font-size: 12px; }
 .bang-card input { width: 100%; min-width: 0; }
 .editor-actions { display: flex; gap: 8px; }
+
+.search-wrapper { position: relative; width: 100%; max-width: 375px; flex-direction: column; }
+#shortcut-suggestions { position: absolute; top: 100%; left: 0; right: 0; z-index: 5; list-style: none; background: var(--bg); border: 1px solid var(--border-hover); max-height: 240px; overflow-y: auto; }
+#shortcut-suggestions li { padding: 10px; cursor: pointer; font-size: 12px; overflow-wrap: anywhere; }
+#shortcut-suggestions small { display: block; color: var(--muted-foreground); margin-top: 4px; }
+#shortcut-suggestions li:hover, #shortcut-suggestions [aria-selected="true"] { background: var(--bg-over); outline: 1px solid var(--border-hover); outline-offset: -1px; }

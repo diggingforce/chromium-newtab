@@ -1,3 +1,4 @@
+import { setupSuggestions } from './suggestions.js';
 import { setupBangsEditor } from './bangs.js';
 import './search.js';
 import { input, gif, grid, showSearchAreaCheck, showGifCheck, showFaviconsCheck, gifSource, gifDone, gifUploadBtn, gifUploadRemove, gifUploadFile, autoThemeCheck, bgColorPicker, bgColorInput, lightBgColorPicker, lightBgColorInput, textColorPicker, textColorInput, lightTextColorPicker, lightTextColorInput, fontSelect, openNewtabCheck, autohideSettingsCheck, categoriesEditorContainer, addCategoryBtn, openSettingsBtn, closeSettingsBtn, settingsModal, exportSettingsBtn, importSettingsBtn, importSettingsFile, config, state } from './shared.js';
@@ -186,6 +187,7 @@ if (importSettingsBtn && importSettingsFile) {
     });
 }
 
+setupSuggestions();
 setupBangsEditor();
 applyCachedState();
 init();

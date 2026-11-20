@@ -169,10 +169,13 @@
         <section class="content-column">
             <div class="links-grid" id="links-grid"></div>
 
+            <div class="search-wrapper">
             <div class="search-area">
                 <span class="search-prompt">&gt; find :</span>
-                <input type="text" id="find-input" placeholder="type here" autofocus autocomplete="off" spellcheck="false">
+                <input type="text" id="find-input" role="combobox" aria-label="Search the web or your shortcuts" aria-autocomplete="list" aria-expanded="false" aria-controls="shortcut-suggestions" placeholder="type here" autofocus autocomplete="off" spellcheck="false">
                 <span class="search-badge" id="engine-badge">[/]</span>
+            </div>
+            <ul id="shortcut-suggestions" role="listbox" aria-label="Matching shortcuts" hidden></ul>
             </div>
         </section>
     </main>

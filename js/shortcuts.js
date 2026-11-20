@@ -55,7 +55,7 @@ export function render(data) {
 
     applyAutohide(settings['autohide-settings']);
 
-    const searchArea = document.querySelector('.search-area');
+    const searchArea = document.querySelector('.search-wrapper');
     if (searchArea) searchArea.style.display = showSearchArea ? 'flex' : 'none';
     if (gifBox) gifBox.style.display = showGif ? 'inline-flex' : 'none';
     if (gif) gif.style.display = showGif ? 'block' : 'none';
