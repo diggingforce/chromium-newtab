@@ -1,4 +1,4 @@
-import { sectionKey, legacySectionKey, isSectionVisible } from './shortcuts-model.js';
+import { isSectionVisible } from './shortcuts-model.js';
 import { iconSource } from './icon-model.js';
 import { readLocalIcon } from './icons.js';
 import { applyLayout } from './layout.js';
@@ -76,7 +76,7 @@ export function render(data) {
         grid.querySelectorAll('.category-block').forEach(block => {
             const section = data.sections[Number(block.dataset.idx)];
             if (section) {
-                block.style.display = isSectionVisible(settings, section.title) ? '' : 'none';
+                block.style.display = isSectionVisible(settings, section) ? '' : 'none';
             }
         });
     }
@@ -86,21 +86,21 @@ export function renderCategoryToggles() {
     if (!categoryTogglesContainer || !Array.isArray(config.sections)) return;
 
     categoryTogglesContainer.innerHTML = config.sections.map((section, idx) => {
-        const key = sectionKey(section.title);
-        const isChecked = isSectionVisible(config.settings, section.title);
+        const isChecked = isSectionVisible(config.settings, section);
         const id = `toggle-cat-${idx}`;
         return `
             <div>
                 <label for="${id}">${esc(section.title)}</label>
-                <input type="checkbox" id="${id}" data-key="${esc(key)}" ${isChecked ? 'checked' : ''}>
+                <input type="checkbox" id="${id}" data-section="${idx}" ${isChecked ? 'checked' : ''}>
             </div>
         `;
     }).join('');
 
     categoryTogglesContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
         checkbox.addEventListener('change', () => {
-            const key = checkbox.dataset.key;
-            updateSettings(key, checkbox.checked);
+            config.sections[Number(checkbox.dataset.section)].visible = checkbox.checked;
+            render(config);
+            saveConfig();
         });
     });
 }
@@ -224,16 +224,10 @@ export function renderCategoriesEditor() {
 
         const titleInput = card.querySelector('.category-title-input');
         titleInput.addEventListener('input', () => {
-            const oldTitle = config.sections[sIdx].title;
+            const section = config.sections[sIdx];
+            section.visible = isSectionVisible(config.settings, section);
             const newTitle = titleInput.value.trim() || 'Untitled';
-            config.sections[sIdx].title = newTitle;
-            const oldKeys = [sectionKey(oldTitle), legacySectionKey(oldTitle)];
-            const newKey = sectionKey(newTitle);
-            const prev = oldKeys.map(k => config.settings[k]).find(v => v !== undefined);
-            if (prev !== undefined && !oldKeys.includes(newKey)) {
-                config.settings[newKey] = prev;
-                oldKeys.forEach(k => { delete config.settings[k]; });
-            }
+            section.title = newTitle;
             saveConfig();
             render(config);
             renderCategoryToggles();

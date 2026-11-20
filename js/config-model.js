@@ -64,6 +64,7 @@ export function sanitizeImportedConfig(raw) {
 
             return {
                 title: typeof section.title === 'string' && section.title.trim() ? section.title : 'Untitled',
+                ...(typeof section.visible === 'boolean' ? { visible: section.visible } : {}),
                 links: validLinks
             };
         });

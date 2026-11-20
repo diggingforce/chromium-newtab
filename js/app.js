@@ -1,5 +1,6 @@
 import { setupIcons } from './icons.js';
 import { setupFocus } from './focus.js';
+import { nextCategoryTitle } from './shortcuts-model.js';
 import { setupLayout } from './layout.js';
 import { setupUndo } from './undo.js';
 import { setupSettings, expandSection } from './settings.js';
@@ -144,7 +145,7 @@ if (autohideSettingsCheck) {
 if (addCategoryBtn) {
     addCategoryBtn.addEventListener('click', () => {
         if (!Array.isArray(config.sections)) config.sections = [];
-        config.sections.push({ title: 'New Category', links: [] });
+        config.sections.push({ title: nextCategoryTitle(config.sections), visible: true, links: [] });
         const shortcutsSection = document.getElementById('section-shortcuts');
         if (shortcutsSection) expandSection(shortcutsSection);
         saveConfig();
