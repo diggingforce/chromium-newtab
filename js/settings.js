@@ -48,8 +48,12 @@ export function setupSettings() {
         openSettingsBtn.focus();
     });
     settingsModal.querySelectorAll('.section-toggle').forEach(button => {
+        const section = button.closest('.settings-section');
+        const panel = section.querySelector('.settings-section-content');
+        panel.id ||= `${section.id}-content`;
+        button.setAttribute('aria-controls', panel.id);
+        button.setAttribute('aria-expanded', String(!section.classList.contains('collapsed')));
         button.addEventListener('click', () => {
-            const section = button.closest('.settings-section');
             const collapsed = section.classList.toggle('collapsed');
             button.setAttribute('aria-expanded', String(!collapsed));
             button.querySelector('.section-arrow').textContent = collapsed ? '▶' : '▼';

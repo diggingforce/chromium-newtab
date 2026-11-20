@@ -1,6 +1,6 @@
 export function setupFocus() {
     document.addEventListener('keydown', event => {
-        if (['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+        if (!event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing) {
             document.documentElement.dataset.keyboardFocus = '';
         }
     }, true);
