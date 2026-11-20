@@ -1,3 +1,4 @@
+import { normalizeLayout } from './layout-model.js';
 import { clearUndo } from './undo.js';
 import { httpUrl } from './search-model.js';
 import { renderBangsEditor } from './bangs.js';
@@ -47,6 +48,7 @@ export function sanitizeImportedConfig(raw) {
     if (!isPlainObject(source)) return null;
 
     const result = {};
+    if (isPlainObject(source.layout)) result.layout = normalizeLayout(source.layout);
     let skipped = 0;
 
     if (typeof source.title === 'string') result.title = source.title;

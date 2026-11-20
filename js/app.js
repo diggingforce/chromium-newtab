@@ -1,3 +1,4 @@
+import { setupLayout } from './layout.js';
 import { setupUndo } from './undo.js';
 import { setupSettings, expandSection } from './settings.js';
 import { setupSuggestions } from './suggestions.js';
@@ -161,6 +162,7 @@ if (importSettingsBtn && importSettingsFile) {
     });
 }
 
+setupLayout();
 setupUndo();
 setupSettings();
 setupSuggestions();

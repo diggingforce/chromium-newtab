@@ -124,6 +124,21 @@
             </div>
         </div>
 
+        <div class="settings-section collapsed" id="section-layout">
+            <div class="settings-section-header">
+                <h3 class="settings-subtitle"><button type="button" class="section-toggle" aria-expanded="false" aria-controls="layout-content"><span class="section-arrow">▶</span> Image &amp; layout</button></h3>
+            </div>
+            <div class="settings-section-content appearance-grid" id="layout-content">
+                <label class="layout-control" for="image-width">image width <input id="image-width" data-layout="imageWidth" type="range" min="120" max="600" step="10"><output for="image-width"></output></label>
+                <label class="layout-control" for="image-ratio">image ratio <select id="image-ratio" data-layout="imageRatio"><option value="natural">original</option><option value="square">square</option><option value="portrait">portrait</option><option value="landscape">landscape</option></select></label>
+                <label class="layout-control" for="image-fit">image fit <select id="image-fit" data-layout="imageFit"><option value="contain">contain</option><option value="cover">crop to fill</option></select></label>
+                <label class="layout-control" for="image-position">image position <select id="image-position" data-layout="imagePosition"><option value="left">left</option><option value="right">right</option><option value="above">above</option></select></label>
+                <label class="layout-control" for="layout-gap">spacing <input id="layout-gap" data-layout="gap" type="range" min="16" max="96"><output for="layout-gap"></output></label>
+                <label class="layout-control" for="layout-columns">columns <input id="layout-columns" data-layout="columns" type="range" min="1" max="4"><output for="layout-columns"></output></label>
+                <label class="layout-control" for="page-width">page width <input id="page-width" data-layout="pageWidth" type="range" min="700" max="1400" step="20"><output for="page-width"></output></label>
+            </div>
+        </div>
+
         <div class="settings-section collapsed" id="section-shortcuts">
             <div class="settings-section-header">
                 <h3 class="settings-subtitle"><button type="button" class="section-toggle"><span class="section-arrow">▶</span> Shortcuts</button></h3>

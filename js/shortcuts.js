@@ -1,3 +1,4 @@
+import { applyLayout } from './layout.js';
 import { rememberDeletion } from './undo.js';
 import { input, gif, gifBox, grid, categoryTogglesContainer, categoriesEditorContainer, config, state } from './shared.js';
 import { applyAutohide } from './appearance.js';
@@ -25,6 +26,7 @@ export function isSectionVisible(settings, title) {
 }
 
 export function render(data) {
+    applyLayout();
     if (data.title) document.title = data.title;
 
     if (state.uploadedGifUrl) {

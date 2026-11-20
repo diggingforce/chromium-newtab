@@ -1,3 +1,4 @@
+import { syncLayoutUI } from './layout.js';
 import { gif, showSearchAreaCheck, showGifCheck, showFaviconsCheck, gifSource, autoThemeCheck, bgColorLabel, textColorLabel, lightBgRow, lightTextRow, bgColorPicker, bgColorInput, lightBgColorPicker, lightBgColorInput, textColorPicker, textColorInput, lightTextColorPicker, lightTextColorInput, fontSelect, openNewtabCheck, autohideSettingsCheck, openSettingsBtn, config } from './shared.js';
 import { updateGifUploadUI } from './images.js';
 import { saveConfig } from './storage.js';
@@ -57,6 +58,7 @@ export function syncSettingsUI() {
     if (lightTextColorInput) lightTextColorInput.value = lightText;
     if (lightTextColorPicker && /^#[0-9a-f]{6}$/i.test(lightText)) lightTextColorPicker.value = lightText;
 
+    syncLayoutUI();
     updateGifUploadUI();
     applyAutohide(config.settings['autohide-settings']);
     applyTheme(config.theme);
