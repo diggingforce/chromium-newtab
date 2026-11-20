@@ -1,4 +1,5 @@
-import { browserApi, config, setConfig, settingsModal, FALLBACK_THEME, FALLBACK_SETTINGS } from './shared.js';
+import { browserApi, config, setConfig, FALLBACK_THEME, FALLBACK_SETTINGS } from './shared.js';
+import { hasPendingSettingsEdits } from './settings.js';
 import { render, renderCategoriesEditor, renderCategoryToggles } from './shortcuts.js';
 import { syncSettingsUI } from './appearance.js';
 import { renderBangsEditor } from './bangs.js';
@@ -95,7 +96,7 @@ function receiveRemote(value) {
     const fingerprint = configFingerprint(value);
     persistedFingerprint = fingerprint;
     if (ownWrites.delete(fingerprint) || fingerprint === configFingerprint(config)) return;
-    if (dirty || failed || queue.busy || settingsModal.open) {
+    if (dirty || failed || queue.busy || hasPendingSettingsEdits()) {
         remoteConfig = value;
         queue.discard();
         showSaveStatus('conflict');

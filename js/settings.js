@@ -1,5 +1,27 @@
-import { settingsModal, openSettingsBtn, closeSettingsBtn } from './shared.js';
+import { settingsModal, openSettingsBtn, closeSettingsBtn, config, state } from './shared.js';
 import { closeSuggestions } from './suggestions.js';
+
+export function hasPendingSettingsEdits() {
+    if (!settingsModal.open) return false;
+    if (state.gifUploadInProgress) return true;
+    for (const form of document.querySelectorAll('.bang-card')) {
+        const key = form.dataset.key;
+        const bang = config.search?.bangs?.[key];
+        if (!bang || form.elements.command.value !== key ||
+            ['name', 'url', 'home'].some(field => form.elements[field].value !== (bang[field] || ''))) return true;
+    }
+    const fields = {
+        'gif-source': config.gif || 'assets/gif.gif',
+        'bg-color': config.theme?.bg || '#191919',
+        'text-color': config.theme?.text || '#fafafa',
+        'light-bg-color': config.theme?.lightBg || '#fafafa',
+        'light-text-color': config.theme?.lightText || '#191919'
+    };
+    return Object.entries(fields).some(([id, value]) => {
+        const field = document.getElementById(id);
+        return (id === 'gif-source' || document.activeElement === field) && field.value !== value;
+    });
+}
 
 export function expandSection(section) {
     section.classList.remove('collapsed');
