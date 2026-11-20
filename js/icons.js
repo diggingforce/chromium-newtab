@@ -13,6 +13,7 @@ export async function readLocalIcon(file) {
         const scale = Math.min(32 / bitmap.width, 32 / bitmap.height);
         const width = bitmap.width * scale;
         const height = bitmap.height * scale;
+        context.imageSmoothingQuality = 'high';
         context.drawImage(bitmap, (32 - width) / 2, (32 - height) / 2, width, height);
         return canvas.toDataURL('image/png');
     } finally {
