@@ -37,6 +37,7 @@ export function setupSuggestions() {
     input.addEventListener('input', updateSuggestions);
     input.addEventListener('focus', updateSuggestions);
     input.addEventListener('keydown', event => {
+        if (event.isComposing || event.keyCode === 229) return;
         if (list.hidden) return;
         if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
             event.preventDefault();
