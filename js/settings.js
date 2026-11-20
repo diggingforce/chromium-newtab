@@ -2,7 +2,6 @@ import { settingsModal, openSettingsBtn, closeSettingsBtn, config, state } from 
 import { closeSuggestions } from './suggestions.js';
 
 export function hasPendingSettingsEdits() {
-    if (!settingsModal.open) return false;
     if (state.gifUploadInProgress) return true;
     for (const form of document.querySelectorAll('.bang-card')) {
         const key = form.dataset.key;

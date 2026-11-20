@@ -53,6 +53,9 @@ function bindBangForm(form) {
         if (oldKey !== key) delete config.search.bangs[oldKey];
         config.search.bangs[key] = { name, url, ...(home ? { home } : {}) };
         form.dataset.key = key;
+        for (const [field, value] of Object.entries({ command: key, name, url, home })) {
+            form.elements[field].value = value;
+        }
         const saved = await saveConfig();
         status.textContent = saved ? 'bang updated' : 'bang updated in this tab; check the save status above';
     });
