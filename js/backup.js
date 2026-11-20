@@ -122,15 +122,15 @@ export async function handleImportFile(file) {
             return;
         }
 
-        const removedUpload = await removeUploadedGif({ silent: true });
-        if (!removedUpload) {
-            setBackupStatus('import failed: could not clear uploaded image', true);
-            return;
-        }
-
         const saved = await applyImportedConfig(sanitized.config);
         if (!saved) {
             setBackupStatus('settings applied but could not be saved. resolve the save status above.', true);
+            return;
+        }
+
+        const removedUpload = await removeUploadedGif({ silent: true });
+        if (!removedUpload) {
+            setBackupStatus('settings imported, but could not clear uploaded image. use remove to try again.', true);
             return;
         }
 

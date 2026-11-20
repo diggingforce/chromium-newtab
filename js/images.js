@@ -257,18 +257,28 @@ export async function applyGifSource() {
     if (!gifSource) return;
 
     const value = gifSource.value.trim();
+    const currentConfig = config;
+    const previous = config.gif;
+    const hasUpload = Boolean(state.uploadedGif || state.uploadedGifUrl);
 
-    if (state.uploadedGif || state.uploadedGifUrl) {
+    if (hasUpload) {
         const activeDefault = config.gif || 'assets/gif.gif';
         if (value === activeDefault || (value === 'gif.gif' && activeDefault === 'assets/gif.gif')) {
             setGifUploadStatus('uploaded image is active. use remove to delete it.');
             return;
         }
 
-        const removed = await removeUploadedGif({ silent: true });
-        if (!removed) return;
     }
 
     const normalizedValue = value === 'gif.gif' ? 'assets/gif.gif' : value;
-    await updateSettings('gif', normalizedValue);
+    const saved = await updateSettings('gif', normalizedValue);
+    if (config !== currentConfig) return;
+    if (!saved) {
+        if (config.gif === normalizedValue) config.gif = previous;
+        render(config);
+        setGifUploadStatus('could not save the image URL. your uploaded image was kept. try again after resolving the save status.', true);
+        return;
+    }
+    if (hasUpload && !await removeUploadedGif({ silent: true })) return;
+    gifSource.value = config.gif;
 }
