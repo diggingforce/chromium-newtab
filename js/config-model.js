@@ -1,4 +1,4 @@
-import { isPlainObject, isSafeKey, isSafeUrl } from './utils.js';
+import { isPlainObject, isSafeKey, isSafeUrl, webUrl } from './utils.js';
 import { isLocalIcon } from './icon-model.js';
 import { normalizeLayout } from './layout-model.js';
 import { httpUrl } from './search-model.js';
@@ -58,7 +58,7 @@ export function sanitizeImportedConfig(raw) {
             const validLinks = links
                 .filter(isPlainObject)
                 .filter(link => typeof link.name === 'string' && typeof link.url === 'string' && isSafeUrl(link.url))
-                .map(link => ({ name: link.name, url: link.url, ...(isLocalIcon(link.icon) ? { icon: link.icon } : {}) }));
+                .map(link => ({ name: link.name, url: webUrl(link.url).href, ...(isLocalIcon(link.icon) ? { icon: link.icon } : {}) }));
 
             skipped += links.length - validLinks.length;
 
@@ -92,7 +92,7 @@ export function sanitizeImportedConfig(raw) {
 
         if (typeof source.search.default === 'string') {
             if (isSafeUrl(source.search.default)) {
-                search.default = source.search.default;
+                search.default = webUrl(source.search.default).href;
             } else {
                 skipped += 1;
             }

@@ -20,8 +20,10 @@ export function findShortcuts(sections, query, limit = 6) {
     const normalize = value => String(value).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
     const needle = normalize(query.trim());
     if (!needle || needle.startsWith('!')) return [];
-    return (sections || []).flatMap(section => (section.links || []).map(link => ({ ...link, category: section.title })))
-        .filter(link => httpUrl(link.url) && normalize(`${link.name} ${link.url} ${link.category}`).includes(needle))
+    return (sections || []).flatMap(section => (section.links || []).map(link => ({ ...link, url: webUrl(link.url)?.href, category: section.title })))
+        .filter(link => link.url && normalize(`${link.name} ${link.url} ${link.category}`).includes(needle))
         .sort((a, b) => Number(normalize(b.name).startsWith(needle)) - Number(normalize(a.name).startsWith(needle)))
         .slice(0, limit);
 }
+import { webUrl } from './utils.js';
+
